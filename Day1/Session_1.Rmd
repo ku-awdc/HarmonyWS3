@@ -60,6 +60,8 @@ cleanup <- character(0)
 
 ## Overview
 
+TODO
+
 Date/time:
 
   - 28th June to 1st July 2021
@@ -110,6 +112,12 @@ Contact:  info@harmony-net.eu
 
   
 # Background
+
+## WHat is Se/sp
+
+TODO - Arianna (separate slides)?
+
+
 
 ## Diagnostic test evaluation: with gold standard = simple! {.fragile}
 

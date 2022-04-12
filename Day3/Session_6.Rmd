@@ -32,6 +32,17 @@ source("../rsc/setup.R")
 
 ## Types of missingness
 
+TODO:  change session to validation of model assumptions
+
+Use deliberate missingness for that
+
+Also briefly mention data can be MAR
+
+Keep just Optional exercise A - anthrax
+
+
+
+
 MCAR:  Missing completely at random
 
   - There is absolutely no pattern to the missingness

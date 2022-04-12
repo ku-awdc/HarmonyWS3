@@ -186,8 +186,6 @@ model{
 - The populations can be artificial (e.g. age groups) but must not be decided based on the diagnostic test results
   * It helps if the prevalence differs between the populations
 
-
-
 ## Multiple populations: special cases
 
 - A small disease-free group is extremely helpful
@@ -197,6 +195,7 @@ model{
 . . .
 
 - A small experimentally infected group MAY be helpful but it is often dangerous to assume that sensitivity is consistent!
+
 
 ## Initial values
 

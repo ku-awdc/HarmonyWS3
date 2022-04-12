@@ -31,6 +31,21 @@ source("../rsc/setup.R")
 
 ## Recap
 
+TODO: redo so it is covariates
+
+- covariates on Se/Sp
+- covariates on prevalence (random effects)
+
+Example:  cervical cancer screening (covariates:  age, pregnancy)
+
+TODO:  Ask Sonja if she has any material (or Lef)
+
+Model at individual vs group level
+
+
+TODO:  session 8 = work on own data
+
+
 Models for diagnostic test evaluation require:
 
   - At least 2 tests

@@ -181,35 +181,20 @@ And runjags:
 citation("runjags")
 ```
 
-# Discussion session 5
 
-## Points to consider {.fragile}
+# Discussion session 5 - should we correct for dependence?
 
-1. Interpreting the results of latent class models is much more difficult than running them
+TODO: 
 
-1. How can we be sure that e.g. `probability of a positive test result conditional on the latent state` is the same thing as `sensitivity`?
+Two tests - is there a point?
 
-1. How can we make sure that our publications contain all of the necessary information to allow others to interpret our findings?
+Multiple antibody tests - latent state is always antibody
 
-## Exercise
+What does "conditionally independent mean"?
 
-1. Read the STARD-BLCM guidelines, checklist, and examples documents.  Make sure you understand what the documents ask for.
-
-1. Read the *Diagnosing diagnostic tests* paper provided for Day 3, and try to understand how the issues discussed in this paper relate to what we have discussed yesterday and today.
-
-1. Be ready with questions for the group discussion! You get several bonus points if you can ask a question that the paper authors are unable to answer.
+Session:  discussion
 
 
-## Summary {.fragile}
-
-- Latent class models are MUCH more complex to interpret than traditional models
-  - Take time to think about what the latent class means
-  
-- Think about which tests might be correlated and if you should include covariance terms
-
-- Think about the biology of where your data comes from, particularly if populations are fundamentally different
-
-- Follow the STARD checklist!
 
 ```{r include=FALSE}
 unlink(cleanup)

@@ -99,6 +99,7 @@ prob[3,p] <-  prev[p] * (se[1]*se[2]*se[3]) +
 
 ## Are the tests conditionally independent?
 
+
 - Example:  we have one blood, one milk, and one faecal test
 
   * But the blood and milk test are basically the same test
@@ -118,6 +119,8 @@ prob[3,p] <-  prev[p] * (se[1]*se[2]*se[3]) +
 
 
 ## Dealing with correlation: Covid example
+
+TODO:  add DAG showing blocking path
 
 It helps to consider the data simulation as a (simplified) biological process (where my parameters are not representative of real life!):
 
@@ -420,6 +423,13 @@ summary(results, vars="bpv")
 See `?runjags::add.summary` for more information on mutate
 
 
+## Calculating degrees of freedom
+
+TODO
+
+Link to paper
+
+
 ## Practical considerations
 
 - Correlation terms add complexity to the model in terms of:
@@ -435,6 +445,7 @@ See `?runjags::add.summary` for more information on mutate
 . . .
 
 - We will return to these themes tomorrow!
+
 
 
 # Practical session 4
