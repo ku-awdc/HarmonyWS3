@@ -4,9 +4,9 @@ author:
 - Matt Denwood
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
 subtitle: Homework and software installation for the online HARMONY training workshop on diagnostic test evaluation
 fontsize: 12pt
 ---
@@ -66,9 +66,9 @@ We will primarily be using GitHub as a way to disseminate the lecture notes and 
 
 ## Simple Web Usage
 
-We have created a public repository containing the teaching material for the training workshop.  This means that anyone can view the teaching material at any time via the following website: https://github.com/ku-awdc/HarmonyWS2
+We have created a public repository containing the teaching material for the training workshop.  This means that anyone can view the teaching material at any time via the following website: https://github.com/ku-awdc/HarmonyWS3
 
-You should see a number of folders listed with names "Day0", "Day1" etc, and within these folders are files like like "Session_1.Rmd", "Session_1.pdf" etc.  Each of the sessions for the online training workshop (including this preparation document) has a series of files:  the .Rmd is the original Rmarkdown document, and the .pdf and .html files are created from these.  You can click on any of these files to view them, although of the different file formats the .pdf version is probably easiest to download directly from the website.  There are two problems with this:
+You should see a number of folders listed with names "Day0", "Day1" etc, and within these folders are files like like "Session_1.Rmd", "Session_1.pdf" etc.  Each of the sessions for the training workshop (including this preparation document) has a series of files:  the .Rmd is the original Rmarkdown document, and the .pdf and .html files are created from these.  You can click on any of these files to view them, although of the different file formats the .pdf version is probably easiest to download directly from the website.  There are two problems with this:
 
 1 - You will likely encounter problems when copy/pasting R code from the PDF files.
 
@@ -81,21 +81,24 @@ We therefore recommend that you follow the instructions below to clone the repos
 If you have never used GitHub before, you should create an account via http://github.com - it is free and easy. Remember to make a note of the username and password that you just created!
 
 
-## GitHub Desktop
+## Cloning a repository inside RStudio
 
-The easiest way to use GitHub is via GitHub desktop.  Go to https://desktop.github.com and download/install the software. Then open it and sign in using your GitHub account (the username and password that you just created).  This should become the primary way in which you interact with GitHub, rather than via your browser.
+The easiest way to clone the `HarmonyWS3` repository on to your computer is via RStudio. Go the the `File` menu and select `New project`. It will open and wizard menu, giving you three alternative ways to create a project: select `Version Control` and then `GIT`. Then type/paste `https://github.com/ku-awdc/HarmonyWS3.git` into the box where it says `Repository URL`. A suggested local path folder will be created automatically at the bottom but feel free to change this. Then click on `Clone` and wait for the files to download.
 
-The first step is to clone the `HarmonyWS2` repository on to your computer. From inside GitHub Desktop, go to the File menu then Clone Respository, then click on the URL tab.  Then type/paste `ku-awdc/HarmonyWS2` into the box where it says `Filter your reposotories` or `Repository URL` or `GitHub username and repository` (depending on your version of GitHub Desktop). A suggested local path folder will be created automatically at the bottom but feel free to change this. Then click on Clone and wait for the files to download.
+Creating the clone copies all of the files currently on the GitHub repository to your computer at the local path specified above. This is where all of the course material will (eventually) be located. You can browse the content using Windows File Explorer or going to the `Files` browser tab in RStudio (usually located in the lower right window). 
+For example, look inside the `'Day0'` folder and open up the `'Session_Preparation.html'` file - that is a local copy of the same document you are currently reading! But now you also have the PDF version - use this if you want to print the document for some reason, but it is a good idea to stick to using the HTML version if you want to copy/paste R code (you will probably encounter problems with quotation marks if you copy/paste R code from PDF files).  The two versions should be identical.  
 
-Creating the clone copies all of the files currently on the GitHub repository to your computer at the local path specified above (if you can't remember what this was choose 'Show in Windows/Finder' or similar, depending on your OS, under the Respository menu). This is where all of the course material will (eventually) be located. For example, look inside the `'Day0'` folder and open up the `'Session_Preparation.html'` file - that is a local copy of the same document you are currently reading! But now you also have the PDF version - use this if you want to print the document for some reason, but it is a good idea to stick to using the HTML version if you want to copy/paste R code (you will probably encounter problems with quotation marks if you copy/paste R code from PDF files).  The two versions should be identical.
+Remember to select the option `View in web browser` when opening an html file from inside RStudio.  
+
+The next time you want to open the cloned repository, go to the `File` menu inside RStudio and select `Open project`. Locate your project and click `open`.
 
 ## Modifying Files
 
-Once you have set up the local copy of the repository, you can then add, delete and modify any of the files within your local copy of the repository. Try doing this by deleting the `'Session_Preparation.html'` file. Now go back to GitHub Desktop where you should see a line appear on the left with a red minus symbol in a box to the right hand side - this is telling you that a file has been deleted locally (if you had modified the file rather than deleting it, the box would be orange and contain a dot). However, you don't want to delete or modify any of the files we are providing in case we update them later.  If you do this by mistake, just right-click the relevant line in GitHub desktop and choose "Discard changes" - the file should then be restored.  Do this now for the `'Session_Preparation.html'` file and check that it has reappeared.  If you do want to modify a file for some reason, we suggest that you copy it and modify the copied version.  If you keep the copy inside the same folder then GitHub desktop will show the new file (green plus in the box) but you can safely ignore these, or move the copied file outside of the repository folder if you want to keep things simple.
+Once you have set up the local copy of the repository, you can then add, delete and modify any of the files within your local copy of the repository. Try doing this by deleting the `'Session_Preparation.html'` file. Now go to the `Git` tab in RStudio (usually located in the top right window) where you should see a line appear with a *D* letter in a box to the left hand side - this is telling you that a file has been deleted locally (if you had modified the file rather than deleting it, the box would be blue and contain a *M*). However, you don't want to delete or modify any of the files we are providing in case we update them later.  If you do this by mistake, just toggle the box correspoding to the relevant line (the D will move one step to the left), right click and select `Revert` - the file should then be restored.  Do this now for the `'Session_Preparation.html'` file and check that it has reappeared.  If you do want to modify a file for some reason, we suggest that you copy it and modify the copied version.  If you keep the copy inside the same folder then it will appear as a modification (blue M in the box) but you can safely ignore these, or move the copied file outside of the repository folder if you want to keep things simple.
 
 ## Fetching Updates
 
-An important advantage of GitHub is that we can update a file online (for example to fix a typo or add new material discussed during the workshop), and that update will be immediately available to all of you.  But in order to receive the updated files you need to tell GitHub desktop to look for updates.  Open GitHub desktop, then click on 'Fetch origin' and then 'Pull' to make sure that any recent changes are synced to your computer. As long as you remember to pull changes regularly then you will always have an up-to-date copy - so do this regularly.  Forgetting to do this is the only real potential downside of Git.
+An important advantage of GitHub is that we can update a file online (for example to fix a typo or add new material discussed during the workshop), and that update will be immediately available to all of you.  But in order to receive the updated files you need to tell RStudio to look for updates.  In the `Git` tab in RStudio click on 'Pull' (blue arrow facing downwards) to make sure that any recent changes are synced to your computer. As long as you remember to pull changes regularly then you will always have an up-to-date copy - so do this regularly.  Forgetting to do this is the only real potential downside of Git.
 
 ## More information
 
