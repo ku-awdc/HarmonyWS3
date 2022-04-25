@@ -56,67 +56,9 @@ knitr::knit_hooks$set(document = space_collapse)
 cleanup <- character(0)
 ```
 
-# Course Outline and Practicalities
-
-## Overview
-
-TODO
-
-Date/time:
-
-  - 28th June to 1st July 2021
-  - 09.00 - 12.30 daily
-  - Use the same Zoom link all week!
-
-. . .
-
-Teachers:
-
-  - Matt Denwood (University Of Copenhagen)
-  - Nils Toft (IQinAbox)
-  - Søren Saxmose Nielsen (University Of Copenhagen)
-  - Maj Beldring Henningsen (University of Copenhagen)
-
-
-## HARMONY
-
-COST action CA18208:  [https://harmony-net.eu/about/]
-
-Goals are to encourage the use of latent class models/methods for:
-  
-  - Diagnostic test evaluation
-  - Determination of true prevalence
-  - Certification of disease freedom
-  
-Period:  October 2019 - October 2023
-
-Contact:  info@harmony-net.eu
-
-
-## Practical information on the course
-
-- All of the material is on the GitHub repository
-  - We may tweak material as we go along
-  - Remember to pull changes at the start of each day!
-  - And click *refresh* in your browser!
-. . .
-
-- Recordings of the sessions will put onto our website
-  - The link will be sent out following the course
-  - Feel free to share this with your colleagues
-
-. . .
-
-- Attendance registration is necessary for COST meetings
-  - We will take care of this via Zoom
 
   
 # Background
-
-## WHat is Se/sp
-
-TODO - Arianna (separate slides)?
-
 
 
 ## Diagnostic test evaluation: with gold standard = simple! {.fragile}
