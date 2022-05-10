@@ -122,6 +122,8 @@ prob[3,p] <-  prev[p] * (se[1]*se[2]*se[3]) +
 
 TODO:  add DAG showing blocking path
 
+TODO:  refer back to this from session 5
+
 It helps to consider the data simulation as a (simplified) biological process (where my parameters are not representative of real life!):
 
 ```{r}
@@ -427,7 +429,7 @@ See `?runjags::add.summary` for more information on mutate
 
 ## Calculating degrees of freedom
 
-TODO
+TODO: add formula
 
 Link to paper
 

@@ -57,6 +57,7 @@ If you have any difficulties installing the software or get errors from the code
 # GitHub
 
 TODO:  Use RStudio for git cloning - Arianna
+TODO:  add link to happy with GIT
 
 ## Basics
 
@@ -75,6 +76,7 @@ You should see a number of folders listed with names "Day0", "Day1" etc, and wit
 2 - If/when any of the files are updated, you will not get an automatic update of the new version.
 
 We therefore recommend that you follow the instructions below to clone the repository directly to your computer.
+
 
 ## Creating an Account
 

@@ -182,7 +182,31 @@ citation("runjags")
 ```
 
 
-# Discussion session 5 - should we correct for dependence?
+## Between-test correlation structure
+
+We have two antibody tests (with similar targets) plus one antigen test.  The two antibody tests give the same result more frequently together than with the antigen test.  How might the following two models differ in terms of the estimated sensitivity and specificity of the antigen test:
+
+- Assumed conditional independence between all 3 tests
+
+- Assumed correlation between the two antibody tests
+
+...
+
+Answer:  the first model will produced biased estimates for the antigen test (downward) and also the antibody tests (upward).
+
+...
+
+Note: this is only necessary to consider for >=3 tests - and remember the definition of the latent class!
+
+
+## TODO
+
+Have some scenarios for discussion
+
+Sh
+
+
+# Discussion session 5 - should we correct for correlation?
 
 TODO: 
 

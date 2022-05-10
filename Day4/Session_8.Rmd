@@ -1,6 +1,6 @@
 ---
-title: Session 7
-subtitle: Incorporating imperfect sensitivity and specificity into more complex models
+title: Session 8
+subtitle: Practical session
 date: "2021-07-01"
 author:
   - Matt Denwood
@@ -20,32 +20,30 @@ output:
 
 ```{r rendering, eval=FALSE, include=FALSE}
 # To render this as PDF (beamer) slides run:
-rmarkdown::render('Session_7.Rmd', 'beamer_presentation', params=list(presentation=TRUE))
+rmarkdown::render('Session_8.Rmd', 'beamer_presentation', params=list(presentation=TRUE))
 # And for html:
-rmarkdown::render('Session_7.Rmd', 'html_document', params=list(presentation=FALSE))
+rmarkdown::render('Session_8.Rmd', 'html_document', params=list(presentation=FALSE))
 ```
 
 ```{r setup, include=FALSE}
 source("../rsc/setup.R")
 ```
 
-## Recap
+## Practical session
+
+There are 3 options:
+
+1. Finish up previous sessions
+
+2. Own data
+
+3. JAGS module
+
 
 TODO: redo so it is covariates
 
 - covariates on Se/Sp
 - covariates on prevalence (random effects)
-
-- categorical predictors on prevalence (population/group becomes predictor) - example where we modify the code to add a fixed effect across e.g. 3 populations
-
-- categorical predictors on se/sp:  group by population and allow to vary - example with age group and covid paper
-
-- continuous covariates and/or random effects on prevalence
-
-- continuous covariates and/or random slope on se/sp - just mention as possible but ask for help!
-
-- Bundle papers into dropbox zip
-
 
 Example:  cervical cancer screening (covariates:  age, pregnancy)
 

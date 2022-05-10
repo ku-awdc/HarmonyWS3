@@ -199,27 +199,9 @@ Clearly invalid strategies:
 
 Potentially OK but sometimes risky strategies:
 
-- Grouping by age, breed or sex (is sensitivty/specificity consistent?)
+- Grouping by age, breed or sex (is sensitivity/specificity consistent?)
 
 - Grouping based on the results of a diagnostic test not under consideration in the same individuals (is it correlated with one of the tests being evaluated?)
-
-
-
-## Between-test correlation structure
-
-We have two antibody tests (with similar targets) plus one antigen test.  The two antibody tests give the same result more frequently together than with the antigen test.  How might the following two models differ in terms of the estimated sensitivity and specificity of the antigen test:
-
-- Assumed conditional independence between all 3 tests
-
-- Assumed correlation between the two antibody tests
-
-...
-
-Answer:  the first model will produced biased estimates for the antigen test (downward) and also the antibody tests (upward).
-
-...
-
-Note: this is only necessary to consider for >=3 tests - and remember the definition of the latent class!
 
 
 ## Consistent sensitivity and specificity
@@ -230,7 +212,7 @@ Strategies to verify this:
 
 - Eliminate one population at a time and re-run the model (if >=3 populations, or >=2 populations with strong priors)
 
-- Allow sensitivity or specificity to differ between populations (requires a lot of data)
+- Allow sensitivity or specificity to differ between populations (requires a lot of data) - see session 7
 
 
 ## Making your data missing
