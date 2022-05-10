@@ -224,6 +224,8 @@ However:  this assumes that cross-reactions are independent!
 
 ## Model specification
 
+TODO: show formulation as proportion of possible correlation
+
 ```{r, eval=FALSE}
 prob[1,p] <-  prev[p] * ((1-se[1])*(1-se[2])*(1-se[3]) 
                          +covse12 +covse13 +covse23) +
