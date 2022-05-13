@@ -56,8 +56,9 @@ If you have any difficulties installing the software or get errors from the code
 
 # GitHub
 
-TODO:  Use RStudio for git cloning - Arianna
+TODO:  Use RStudio for git cloning - Arianna [DONE]
 TODO:  add link to happy with GIT
+TODO: mention that they need to download git (and configure it) in order to use it with RStudio (unless using a MAC or a Linux distro that comes with git installed by default).
 
 ## Basics
 
