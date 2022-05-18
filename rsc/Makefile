@@ -1,3 +1,4 @@
+#SRC = $(wildcard ../Day0/Session*.Rmd)
 SRC = $(wildcard ../Day*/Session*.Rmd)
 
 PDF   = $(SRC:.Rmd=.pdf)

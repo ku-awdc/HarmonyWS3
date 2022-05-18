@@ -1,0 +1,157 @@
+## Auto-generated Hui-Walter model created by runjags version 2.2.1-7 on 2022-05-18
+
+model{
+
+	## Observation layer:
+
+	# Complete observations (N=20000):
+	for(p in 1:Populations){
+		Tally_RRR[1:8,p] ~ dmulti(prob_RRR[1:8,p], N_RRR[p])
+
+		prob_RRR[1:8,p] <- se_prob[1:8,p] + sp_prob[1:8,p]
+	}
+
+
+	## Observation probabilities:
+
+	for(p in 1:Populations){
+
+		# Probability of observing NoseAG- ThroatAG- ThroatPCR- from a true positive::
+		se_prob[1,p] <- prev[p] * ((1-se[1])*(1-se[2])*(1-se[3]) +covse12 +covse13 +covse23)
+		# Probability of observing NoseAG- ThroatAG- ThroatPCR- from a true negative::
+		sp_prob[1,p] <- (1-prev[p]) * (sp[1]*sp[2]*sp[3] +covsp12 +covsp13 +covsp23)
+
+		# Probability of observing NoseAG+ ThroatAG- ThroatPCR- from a true positive::
+		se_prob[2,p] <- prev[p] * (se[1]*(1-se[2])*(1-se[3]) -covse12 -covse13 +covse23)
+		# Probability of observing NoseAG+ ThroatAG- ThroatPCR- from a true negative::
+		sp_prob[2,p] <- (1-prev[p]) * ((1-sp[1])*sp[2]*sp[3] -covsp12 -covsp13 +covsp23)
+
+		# Probability of observing NoseAG- ThroatAG+ ThroatPCR- from a true positive::
+		se_prob[3,p] <- prev[p] * ((1-se[1])*se[2]*(1-se[3]) -covse12 +covse13 -covse23)
+		# Probability of observing NoseAG- ThroatAG+ ThroatPCR- from a true negative::
+		sp_prob[3,p] <- (1-prev[p]) * (sp[1]*(1-sp[2])*sp[3] -covsp12 +covsp13 -covsp23)
+
+		# Probability of observing NoseAG+ ThroatAG+ ThroatPCR- from a true positive::
+		se_prob[4,p] <- prev[p] * (se[1]*se[2]*(1-se[3]) +covse12 -covse13 -covse23)
+		# Probability of observing NoseAG+ ThroatAG+ ThroatPCR- from a true negative::
+		sp_prob[4,p] <- (1-prev[p]) * ((1-sp[1])*(1-sp[2])*sp[3] +covsp12 -covsp13 -covsp23)
+
+		# Probability of observing NoseAG- ThroatAG- ThroatPCR+ from a true positive::
+		se_prob[5,p] <- prev[p] * ((1-se[1])*(1-se[2])*se[3] +covse12 -covse13 -covse23)
+		# Probability of observing NoseAG- ThroatAG- ThroatPCR+ from a true negative::
+		sp_prob[5,p] <- (1-prev[p]) * (sp[1]*sp[2]*(1-sp[3]) +covsp12 -covsp13 -covsp23)
+
+		# Probability of observing NoseAG+ ThroatAG- ThroatPCR+ from a true positive::
+		se_prob[6,p] <- prev[p] * (se[1]*(1-se[2])*se[3] -covse12 +covse13 -covse23)
+		# Probability of observing NoseAG+ ThroatAG- ThroatPCR+ from a true negative::
+		sp_prob[6,p] <- (1-prev[p]) * ((1-sp[1])*sp[2]*(1-sp[3]) -covsp12 +covsp13 -covsp23)
+
+		# Probability of observing NoseAG- ThroatAG+ ThroatPCR+ from a true positive::
+		se_prob[7,p] <- prev[p] * ((1-se[1])*se[2]*se[3] -covse12 -covse13 +covse23)
+		# Probability of observing NoseAG- ThroatAG+ ThroatPCR+ from a true negative::
+		sp_prob[7,p] <- (1-prev[p]) * (sp[1]*(1-sp[2])*(1-sp[3]) -covsp12 -covsp13 +covsp23)
+
+		# Probability of observing NoseAG+ ThroatAG+ ThroatPCR+ from a true positive::
+		se_prob[8,p] <- prev[p] * (se[1]*se[2]*se[3] +covse12 +covse13 +covse23)
+		# Probability of observing NoseAG+ ThroatAG+ ThroatPCR+ from a true negative::
+		sp_prob[8,p] <- (1-prev[p]) * ((1-sp[1])*(1-sp[2])*(1-sp[3]) +covsp12 +covsp13 +covsp23)
+
+	}
+
+
+	## Priors:
+
+	# Prevalence in population 1:
+	prev[1] ~ dbeta(1,1)
+
+	# Prevalence in population 2:
+	prev[2] ~ dbeta(1,1)
+
+
+	# Sensitivity of NoseAG test:
+	se[1] ~ dbeta(1,1)T(1-sp[1], )
+	# Specificity of NoseAG test:
+	sp[1] ~ dbeta(1,1)
+
+	# Sensitivity of ThroatAG test:
+	se[2] ~ dbeta(1,1)T(1-sp[2], )
+	# Specificity of ThroatAG test:
+	sp[2] ~ dbeta(1,1)
+
+	# Sensitivity of ThroatPCR test:
+	se[3] ~ dbeta(1,1)T(1-sp[3], )
+	# Specificity of ThroatPCR test:
+	sp[3] ~ dbeta(1,1)
+
+
+	# Covariance in sensitivity between NoseAG and ThroatAG tests:
+	# covse12 ~ dunif( (se[1]-1)*(1-se[2]) , min(se[1],se[2]) - se[1]*se[2] )  ## if the sensitivity of these tests may be correlated
+	covse12 <- 0  ## if the sensitivity of these tests can be assumed to be independent
+	# Calculated relative to the min/max for ease of interpretation:
+	corse12 <- ifelse(covse12 < 0, -covse12 / ((se[1]-1)*(1-se[2])), covse12 / (min(se[1],se[2]) - se[1]*se[2]))
+
+	# Covariance in specificity between NoseAG and ThroatAG tests:
+	# covsp12 ~ dunif( (sp[1]-1)*(1-sp[2]) , min(sp[1],sp[2]) - sp[1]*sp[2] )  ## if the specificity of these tests may be correlated
+	covsp12 <- 0  ## if the specificity of these tests can be assumed to be independent
+	# Calculated relative to the min/max for ease of interpretation:
+	corsp12 <- ifelse(covsp12 < 0, -covsp12 / ((sp[1]-1)*(1-sp[2])), covsp12 / (min(sp[1],sp[2]) - sp[1]*sp[2]))
+
+	# Covariance in sensitivity between NoseAG and ThroatPCR tests:
+	# covse13 ~ dunif( (se[1]-1)*(1-se[3]) , min(se[1],se[3]) - se[1]*se[3] )  ## if the sensitivity of these tests may be correlated
+	# Covariance in sensitivity between ThroatAG and ThroatPCR tests:
+	covse23 ~ dunif( (se[2]-1)*(1-se[3]) , min(se[2],se[3]) - se[2]*se[3] )  ## if the sensitivity of these tests may be correlated
+	 # covse23 <- 0  ## if the sensitivity of these tests can be assumed to be independent
+	# Covariance in specificity between ThroatAG and ThroatPCR tests:
+	covsp23 ~ dunif( (sp[2]-1)*(1-sp[3]) , min(sp[2],sp[3]) - sp[2]*sp[3] )  ## if the specificity of these tests may be correlated
+	 # covsp23 <- 0  ## if the specificity of these tests can be assumed to be independent
+	covsp13 <- 0  ## if the specificity of these tests can be assumed to be independent
+	# Calculated relative to the min/max for ease of interpretation:
+	corsp13 <- ifelse(covsp13 < 0, -covsp13 / ((sp[1]-1)*(1-sp[3])), covsp13 / (min(sp[1],sp[3]) - sp[1]*sp[3]))
+
+	# Covariance in sensitivity between ThroatAG and ThroatPCR tests:
+	# covse23 ~ dunif( (se[2]-1)*(1-se[3]) , min(se[2],se[3]) - se[2]*se[3] )  ## if the sensitivity of these tests may be correlated
+	covse23 <- 0  ## if the sensitivity of these tests can be assumed to be independent
+	# Calculated relative to the min/max for ease of interpretation:
+	corse23 <- ifelse(covse23 < 0, -covse23 / ((se[2]-1)*(1-se[3])), covse23 / (min(se[2],se[3]) - se[2]*se[3]))
+
+	# Covariance in specificity between ThroatAG and ThroatPCR tests:
+	# covsp23 ~ dunif( (sp[2]-1)*(1-sp[3]) , min(sp[2],sp[3]) - sp[2]*sp[3] )  ## if the specificity of these tests may be correlated
+"covse23" <- 0
+	# Calculated relative to the min/max for ease of interpretation:
+	corsp23 <- ifelse(covsp23 < 0, -covsp23 / ((sp[2]-1)*(1-sp[3])), covsp23 / (min(sp[2],sp[3]) - sp[2]*sp[3]))
+"covsp23" <- 0
+}
+
+#monitor# se, sp, prev, covse12, corse12, covsp12, corsp12, covse13, corse13, covsp13, corsp13, covse23, corse23, covsp23, corsp23
+
+## Inits:
+inits{
+"se" <- c(0.5, 0.99, 0.5)
+"covse23" <- 0
+"prev" <- c(0.05, 0.95)
+# "covse12" <- 0
+"covsp23" <- 0
+# "covse23" <- 0
+# "covsp12" <- 0
+# "covsp13" <- 0
+# "covsp23" <- 0
+}
+inits{
+"se" <- c(0.99, 0.5, 0.99)
+"sp" <- c(0.75, 0.99, 0.75)
+"prev" <- c(0.95, 0.05)
+# "covse12" <- 0
+# "covse13" <- 0
+# "covse23" <- 0
+# "covsp12" <- 0
+# "covsp13" <- 0
+# "covsp23" <- 0
+}
+
+## Data:
+data{
+"Populations" <- 2
+"N_RRR" <- c(9978, 10022)
+"Tally_RRR" <- structure(c(8827, 478, 481, 17, 100, 15, 29, 31, 8544, 501, 434, 26, 135, 64, 115, 203), .Dim = c(8, 2))
+}
+

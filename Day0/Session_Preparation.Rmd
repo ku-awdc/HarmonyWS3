@@ -1,13 +1,13 @@
 ---
 title: "Preparation for online workshop"
 author:
-- Matt Denwood
+- Matt Denwood and Arianna Comin
 date: "`r Sys.Date()`"
 output:
   html_document:
     df_print: paged
   pdf_document: default
-subtitle: Homework and software installation for the online HARMONY training workshop on diagnostic test evaluation
+subtitle: Homework and software installation for the HARMONY training workshop on diagnostic test evaluation
 fontsize: 12pt
 ---
 
@@ -22,23 +22,26 @@ set.seed(2021-06-18)
 
 # Overview
 
-This document will help you to prepare for the HARMONY training workshop on diagnostic test evaluation being held online from 28th June to 1st July 2021.  The workshop will be oriented around practical exercises, so it is very important that you are using a computer with the necessary software installed. Although we will try to keep the programming to a minimum during the workshop, you will need to be sufficiently familiar with R so that you can use it for basic tasks.  You will also need to download the teaching material from our GitHub site, so you might find it helpful to have created an account with GitHub before the course so that you can access the material more easily during the week (including any updates we make).  Finally, the advanced training workshop will start from the assumption that you have a basic understanding of Bayes' theorem, and what the difference is between a likelihood, prior and posterior distribution.  The purpose of this document is to ensure that you have the necessary software installed, access to the GitHub repository where the teaching material will be made available, and to give you a brief refresher in the basics of Bayesian statistics.
+This document will help you to prepare for the HARMONY training workshop on diagnostic test evaluation being held in Uppsala, Sweden from 8th to 10th June 2022.  The workshop will be oriented around practical exercises, so it is very important that you are using a computer with the necessary software installed. Although we will try to keep the programming to a minimum during the workshop, you will need to be sufficiently familiar with R so that you can use it for basic tasks.  You will also need to download the teaching material from our GitHub site, so you might find it helpful to have created an account with GitHub before the course so that you can access the material more easily during the week (including any updates we make).  Finally, the advanced training workshop will start from the assumption that you have a basic understanding of Bayes' theorem, and what the difference is between a likelihood, prior and posterior distribution.  The purpose of this document is to ensure that you have the necessary software installed, access to the GitHub repository where the teaching material will be made available, and to give you a brief refresher in the basics of Bayesian statistics.
 
 
 # Software installation
 
-TODO:  RStudio - Matt
+You need to install R (version 4.2.0 or later) from https://cran.r-project.org/ as well as RStudio Desktop (version 2022.02.2 or later) from https://www.rstudio.com/products/rstudio/download/
 
-You need to install R (version 4.1.0 or later; preferably version 4.2.0) from https://cran.r-project.org/ and we recommend that you also use Rstudio which can be downloaded separately from https://www.rstudio.com/products/rstudio/download/
+Please also install the latest versions of the following R packages from CRAN:
 
-Please also install the latest versions of the following R packages from CRAN:  tidyverse, PriorGen, rjags, runjags, coda, TeachingDemos
+```{r eval=FALSE}
+install.packages(c("tidyverse", "PriorGen", "rjags", "runjags", 
+                   "coda", "TeachingDemos"))
+```
 
-You will also need the standalone JAGS software (version 4.3.0 or later) for the course - download the installer for your platform from here:  https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/
+You will also need the standalone JAGS software (version 4.3.1 or later) for the course - download the installer for your platform from here:  https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/
 
 To check that you have installed the software correctly please run the following code within R (or RStudio) and make sure that no errors are produced:
 
 ```{r, results="hide", message=FALSE}
-stopifnot(getRversion() >= "4.1.0")
+stopifnot(getRversion() >= "4.2.0")
 stopifnot(require('tidyverse'))
 stopifnot(require('PriorGen'))
 stopifnot(require('rjags'))
@@ -46,9 +49,9 @@ stopifnot(require('runjags'))
 stopifnot(require('coda'))
 stopifnot(require('TeachingDemos'))
 stopifnot(testjags()$JAGS.available)
-stopifnot(numeric_version(testjags()$JAGS.version) >= "4.3.0")
+stopifnot(numeric_version(testjags()$JAGS.version) >= "4.3.1")
 stopifnot(testjags()$rjags.found)
-stopifnot(numeric_version(testjags()$rjags.version) >= "4-8")
+stopifnot(numeric_version(testjags()$rjags.version) >= "4-13")
 ```
 
 If you have any difficulties installing the software or get errors from the code above, please let us know immediately so that we can resolve these before the start of the course.
@@ -56,13 +59,9 @@ If you have any difficulties installing the software or get errors from the code
 
 # GitHub
 
-TODO:  Use RStudio for git cloning - Arianna [DONE]
-TODO:  add link to happy with GIT
-TODO: mention that they need to download git (and configure it) in order to use it with RStudio (unless using a MAC or a Linux distro that comes with git installed by default).
-
 ## Basics
 
-GitHub is an online code repository that in it's most basic form stores the version history of any code project you are working on, and allows you to go back in time to a previous version before someone introduced a bug. It is particularly useful when collaborating with others because it allows you to see who made a change, when it was made, and what the code looked like before that. It also allows changes from different people to be merged into the same central repository to ensure that nobody gets out of sync with everybody else's code.
+GitHub is an online code repository that in it's most basic form stores the version history of any code project you are working on, and allows you to go back in time to a previous version before someone (perhaps you!) introduced a bug. It is particularly useful when collaborating with others because it allows you to see who made a change, when it was made, and what the code looked like before that. It also allows changes from different people to be merged into the same central repository to ensure that nobody gets out of sync with everybody else's code.
 
 We will primarily be using GitHub as a way to disseminate the lecture notes and R/JAGS code for the exercises on course, so you only need to use the most basic features of GitHub (but it is a good thing to learn).
 
@@ -83,6 +82,13 @@ We therefore recommend that you follow the instructions below to clone the repos
 
 If you have never used GitHub before, you should create an account via http://github.com - it is free and easy. Remember to make a note of the username and password that you just created!
 
+## Installing Git
+
+Unless you already have Git installed on your system, you will need to install it in order to be able to use Git within RStudio.  There are a number of ways of doing this, depending on your system and access privileges, but the easiest method is to install GitHub Desktop from https://desktop.github.com (this will also install Git as a command line tool).  If you are unable to install GitHub desktop, then see the following links for some alternative options:
+
+- https://github.com/git-guides/install-git
+
+- https://happygitwithr.com/install-git.html
 
 ## Cloning a repository inside RStudio
 
