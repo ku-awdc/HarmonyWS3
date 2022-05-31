@@ -342,7 +342,7 @@ Simulate some data representing observed test outcomes along with one categorica
 
 ```{r}
 set.seed(2021-07-01)
-N <- 1000
+N <<- 1000
 
 sim_intercept <- -0.5
 
