@@ -335,8 +335,8 @@ Then we can propogate R's RNG to JAGS like so:
 
 ```{r, eval=FALSE}
 set.seed(2021-06-29)
-.RNG.name <- "lecuyer::RngStream"
-.RNG.seed <- list(chain1=sample.int(1e6, 1), chain2=sample.int(1e6, 1)))
+.RNG.name <<- "lecuyer::RngStream"
+.RNG.seed <<- list(chain1=sample.int(1e6, 1), chain2=sample.int(1e6, 1)))
 results <- run.jags(model_string, n.chains=2)
 ```
 
@@ -460,8 +460,8 @@ Here is the R code to run the model:
 set.seed(2021-06-29)
 
 # Make sure this is passed to JAGS:
-.RNG.name <- "lecuyer::RngStream"
-.RNG.seed <- list(chain1=sample.int(1e6, 1), chain2=sample.int(1e6, 1))
+.RNG.name <<- "lecuyer::RngStream"
+.RNG.seed <<- list(chain1=sample.int(1e6, 1), chain2=sample.int(1e6, 1))
 
 # Set up the se_prior and sp_prior variables (optional):
 se_prior <- matrix(1, nrow=2, ncol=2)
@@ -907,8 +907,8 @@ sp <- list(chain1=c(0.5,0.99), chain2=c(0.99,0.5))
 tau <- list(chain1 = 0.01, chain2 = 100)
 intercept <- list(chain1 = -4, chain2 = 4)
 set.seed(2021-06-29)
-.RNG.name <- "lecuyer::RngStream"
-.RNG.seed <- list(chain1=sample.int(1e6, 1), chain2=sample.int(1e6, 1))
+.RNG.name <<- "lecuyer::RngStream"
+.RNG.seed <<- list(chain1=sample.int(1e6, 1), chain2=sample.int(1e6, 1))
 ```
 
 Remember that the intercept is on the logit scale, so -4 corresponds to a prevalence of `r plogis(-4)` and 4 corresponds to a prevalence of `r plogis(4)`. These are quite widely over-dispersed!
