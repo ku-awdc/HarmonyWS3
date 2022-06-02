@@ -27,29 +27,51 @@ This document will help you to prepare for the HARMONY training workshop on diag
 
 # Software installation
 
-You need to install R (version 4.2.0 or later) from https://cran.r-project.org/ as well as RStudio Desktop (version 2022.02.2 or later) from https://www.rstudio.com/products/rstudio/download/
+You need to install R (version 4.1.0 or later) from https://cran.r-project.org/ as well as RStudio Desktop (as recent a version as possible) from https://www.rstudio.com/products/rstudio/download/
 
 Please also install the latest versions of the following R packages from CRAN:
 
-```{r eval=FALSE}
-install.packages(c("tidyverse", "PriorGen", "rjags", "runjags", 
-                   "coda", "TeachingDemos"))
+```{r}
+packages <- c("tidyverse", "PriorGen", "rjags", "runjags", 
+                   "coda", "TeachingDemos")
+if(length(find.package(packages)) != length(packages)){
+  install.packages(packages)
+}
 ```
 
-You will also need the standalone JAGS software (version 4.3.1 or later) for the course - download the installer for your platform from here:  https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/
+You will also need the standalone JAGS software (version 4.3.0 or later) for the course - download the installer for your platform from here:  https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/
+
+## Note for Windows
+
+You need to match your R and JAGS versions as follows:
+
+- R version 4.1.x:  you need the official installer of JAGS version 4.3.0 (and NOT 4.3.1)
+
+- R version 4.2.x:  you need the official installer of JAGS version 4.3.1 (and NOT 4.3.0)
+
+## Note for macOS
+
+If you are using an M1 (Apple Silicon, aka arm64) mac, then you should use the official installer of JAGS 4.3.1 as this will run natively on both x86_64 and arm64 hardware.  If you are using an older Intel mac then you can use either JAGS 4.3.0 or JAGS 4.3.1 (there will not be a difference between the two for your hardware).  This is the same irrespective of which version of R you use.
+
+## Note for Linux
+
+It is very important that the compiler toolchain matches between R and JAGS - if you are installing from an official repository then this should be taken care of for you, but if you are compiling yourself then you do need to ensure that the same compilers (C++ and Fortran) are used for both.
+
+## Checking installation
 
 To check that you have installed the software correctly please run the following code within R (or RStudio) and make sure that no errors are produced:
 
 ```{r, results="hide", message=FALSE}
-stopifnot(getRversion() >= "4.2.0")
+stopifnot(getRversion() >= "4.1.0")
 stopifnot(require('tidyverse'))
 stopifnot(require('PriorGen'))
 stopifnot(require('rjags'))
 stopifnot(require('runjags'))
 stopifnot(require('coda'))
 stopifnot(require('TeachingDemos'))
+packageVersion("runjags") >= numeric_version("2.2.1-7")
 stopifnot(testjags()$JAGS.available)
-stopifnot(numeric_version(testjags()$JAGS.version) >= "4.3.1")
+stopifnot(numeric_version(testjags()$JAGS.version) >= "4.3.0")
 stopifnot(testjags()$rjags.found)
 stopifnot(numeric_version(testjags()$rjags.version) >= "4-13")
 ```
@@ -69,7 +91,7 @@ We will primarily be using GitHub as a way to disseminate the lecture notes and 
 
 We have created a public repository containing the teaching material for the training workshop.  This means that anyone can view the teaching material at any time via the following website: https://github.com/ku-awdc/HarmonyWS3
 
-You should see a number of folders listed with names "Day0", "Day1" etc, and within these folders are files like "Session_1.Rmd", "Session_1.pdf" etc.  Each of the sessions for the training workshop (including this preparation document) has a series of files:  the .Rmd is the original Rmarkdown document, and the .pdf and .html files are created from these.  You can click on any of these files to view them, although of the different file formats the .pdf version is probably easiest to download directly from the website.  There are two problems with this:
+You should see a number of folders listed with names "Session_0", "Session_1" etc, and within these folders are files like "Session_1.Rmd", "Session_1.pdf" etc.  Each of the sessions for the training workshop (including this preparation document) has a series of files:  the .Rmd is the original Rmarkdown document, and the .pdf & .html & .R files are created from these.  You can click on any of these files to view them, although of the different file formats the .pdf version is probably easiest to download directly from the website.  There are two problems with this:
 
 1 - You will likely encounter problems when copy/pasting R code from the PDF files.
 
@@ -95,7 +117,7 @@ Unless you already have Git installed on your system, you will need to install i
 The easiest way to clone the `HarmonyWS3` repository on to your computer is via RStudio. Go to the `File` menu and select `New project`. It will open and wizard menu, giving you three alternative ways to create a project: select `Version Control` and then `GIT`. Then type/paste `https://github.com/ku-awdc/HarmonyWS3.git` into the box where it says `Repository URL`. A suggested local path folder will be created automatically at the bottom but feel free to change this. Then click on `Clone` and wait for the files to download.
 
 Creating the clone copies all of the files currently on the GitHub repository to your computer at the local path specified above. This is where all of the course material will (eventually) be located. You can browse the content using Windows File Explorer or going to the `Files` browser tab in RStudio (usually located in the lower right window). 
-For example, look inside the `'Day0'` folder and open up the `'Session_Preparation.html'` file - that is a local copy of the same document you are currently reading! But now you also have the PDF version - use this if you want to print the document for some reason, but it is a good idea to stick to using the HTML version if you want to copy/paste R code (you will probably encounter problems with quotation marks if you copy/paste R code from PDF files).  The two versions should be identical.  
+For example, look inside the `'Session_0'` folder and open up the `'Session_Preparation.html'` file - that is a local copy of the same document you are currently reading! But now you also have the PDF version - use this if you want to print the document for some reason, but it is a good idea to stick to using the HTML version if you want to copy/paste R code (you will probably encounter problems with quotation marks if you copy/paste R code from PDF files).  Alternatively, you can use the .R files to run the R code directly.  The code in each of the three versions should be identical.
 
 Remember to select the option `View in web browser` when opening an html file from inside RStudio.  
 
