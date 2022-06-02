@@ -26,7 +26,7 @@ rmarkdown::render('Session_8.Rmd', 'html_document', params=list(presentation=FAL
 ```
 
 ```{r setup, include=FALSE}
-source("../rsc/setup.R")
+source("../rsc/setup.R", local = environment())
 ```
 
 ## Practical session

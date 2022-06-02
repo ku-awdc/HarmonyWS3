@@ -26,7 +26,7 @@ rmarkdown::render('Session_7.Rmd', 'html_document', params=list(presentation=FAL
 ```
 
 ```{r setup, include=FALSE}
-source("../rsc/setup.R")
+source("../rsc/setup.R", local = environment())
 ```
 
 ## Recap
@@ -342,11 +342,11 @@ Simulate some data representing observed test outcomes along with one categorica
 
 ```{r}
 set.seed(2021-07-01)
-N <- 1000
+N <<- 1000
 
 sim_intercept <- -0.5
 
-NC <- 2
+NC <<- 2
 category_probs <- rep(1, NC)/NC
 sim_beta1 <- c(0, 0.6)
 stopifnot(length(sim_beta1)==NC)
@@ -404,8 +404,8 @@ sim_beta2
 We can modify the data to include outcome as follows:
 
 ```{r}
-se <- 0.5
-sp <- 0.99
+se <<- 0.5
+sp <<- 0.99
 
 lr_data <- lr_data %>%
   mutate(Observation = rbinom(n(), 1, Status*se + (1-Status)*(1-sp)))

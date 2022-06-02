@@ -26,7 +26,7 @@ rmarkdown::render('Session_2.Rmd', 'html_document', params=list(presentation=FAL
 ```
 
 ```{r setup, include=FALSE}
-source("../rsc/setup.R")
+source("../rsc/setup.R", environment())
 ```
 
 ## Hui-Walter Model
