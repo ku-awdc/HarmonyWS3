@@ -57,6 +57,10 @@ If you are using an M1 (Apple Silicon, aka arm64) mac, then you should use the o
 
 It is very important that the compiler toolchain matches between R and JAGS - if you are installing from an official repository then this should be taken care of for you, but if you are compiling yourself then you do need to ensure that the same compilers (C++ and Fortran) are used for both.
 
+## Note for proficient C++ coders
+
+For the final session, we may (if there is interest) give a brief introduction on how to add functions and distributions to JAGS by creating an R package that creates and loads a new a JAGS module via the C++ interface provided by JAGS. In order to be able to run the examples yourself you will need to have installed the Rcpp package as well as working C++ compilers that match the compiler toolchain used to build R and JAGS (i.e. Rtools for Windows, or Xcode command line tools on macOS). This session will only be for those individuals that are (a) interested and (b) already proficient C++ coders, so if you are not already familiar with C++ and creating R packages then please ignore this note!
+
 ## Checking installation
 
 To check that you have installed the software correctly please run the following code within R (or RStudio) and make sure that no errors are produced:

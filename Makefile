@@ -9,7 +9,7 @@ RENDER_H = @Rscript -e "rmarkdown::render('$<', 'html_document', params=list(pre
 RENDER_P = @Rscript -e "rmarkdown::render('$<', 'beamer_presentation', params=list(presentation=TRUE))"
 RENDER_D = @Rscript -e "rmarkdown::render('$<', 'pdf_document', params=list(presentation=FALSE))"
 RENDER_B = @Rscript -e "rmarkdown::render('$<', 'all')"
-PURL = @Rscript -e "knitr::purl('$<', documentation = 0, output = paste0(tools::file_path_sans_ext('$<'), '.R'))"
+PURL = @Rscript -e "knitr::purl('$<', documentation = 2L, output = paste0(tools::file_path_sans_ext('$<'), '.R'))"
 
 %.R:%.Rmd
 	$(PURL)
