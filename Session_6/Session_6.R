@@ -1,0 +1,529 @@
+params <-
+list(presentation = TRUE)
+
+#' ---
+#' title: Session 6
+#' subtitle: Validation of model assumptions
+#' date: "2022-06-09"
+#' author:
+#'   - Matt Denwood
+#' theme: metropolis
+#' aspectratio: 43
+#' colortheme: seahorse
+#' header-includes: 
+#'   - \input{../rsc/preamble}
+#' params:
+#'   presentation: TRUE
+#' output:
+#'   beamer_presentation:
+#'       pandoc_args: ["-t", "beamer"]
+#'       slide_level: 2
+#'   html_document: default
+#' ---
+#' 
+## ----rendering, eval=FALSE, include=FALSE-------------------------------------
+## # To render this as PDF (beamer) slides run:
+## rmarkdown::render('Session_6.Rmd', 'beamer_presentation', params=list(presentation=TRUE))
+## # And for html:
+## rmarkdown::render('Session_6.Rmd', 'html_document', params=list(presentation=FALSE))
+
+#' 
+## ----setup, include=FALSE-----------------------------------------------------
+source("../rsc/setup.R", local = environment())
+
+#' 
+#' 
+#' ## Key model assumptions
+#' 
+#' NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
+#' 
+#' 
+#' The following model assumptions are critical:
+#' 
+#' - Consistent sensitivity and specificity across populations
+#' 
+#' ---
+#' 
+#' - Populations are not based on a diagnostic test that is correlated with those used in the model
+#' 
+#' ---
+#' 
+#' - Any missing data is missing completely at random (MCAR) or missing at random (MAR)
+#' 
+#' ---
+#' 
+#' - Any between-test correlation structure is described (for >=3 tests)
+#' 
+#' 
+#' 
+#' ## Types of missingness
+#' 
+#' MCAR:  Missing completely at random
+#' 
+#'   - There is absolutely no pattern to the missingness
+#'   - This is the best kind
+#'   
+#' . . .
+#' 
+#' MAR:  Missing at random
+#' 
+#'   - There is a pattern to the missingness but we know what it is
+#'   - This is usually possible to deal with but needs some consideration
+#' 
+#' . . .
+#' 
+#' MNAR:  Missing not at random
+#' 
+#'   - There is an unknown (or unrecorded) pattern to the missingness
+#'   - It is therefore possible that the prevalence is confounded with missingness
+#'   
+#' 
+#' ## Missingness and template Hui-Walter
+#' 
+#' We can simulate MCAR data as follows:
+#' 
+#' 
+## -----------------------------------------------------------------------------
+set.seed(2021-06-30)
+# Parameter values to simulate:
+N <- 1000
+sensitivity <- c(0.8, 0.9, 0.95)
+specificity <- c(0.95, 0.99, 0.95)
+
+Populations <- 2
+prevalence <- c(0.25,0.5)
+
+data <- tibble(Population = sample(seq_len(Populations), N, replace=TRUE)) %>%
+  mutate(Status = rbinom(N, 1, prevalence[Population])) %>%
+  mutate(Test1 = rbinom(N, 1, sensitivity[1]*Status + (1-specificity[1])*(1-Status))) %>%
+  mutate(Test2 = rbinom(N, 1, sensitivity[2]*Status + (1-specificity[2])*(1-Status))) %>%
+  mutate(Test3 = rbinom(N, 1, sensitivity[3]*Status + (1-specificity[3])*(1-Status))) %>%
+  select(-Status)
+
+#' 
+#' - - -
+#' 
+#' Now introduce missingness in all 3 tests:
+#' 
+## -----------------------------------------------------------------------------
+missingness <- c(0.1, 0.2, 0.3)
+data <- data %>%
+  mutate(Test1 = case_when(
+    rbinom(n(), 1, missingness[1]) == 1L ~ NA_integer_,
+    TRUE ~ Test1
+  )) %>%
+  mutate(Test2 = case_when(
+    rbinom(n(), 1, missingness[2]) == 1L ~ NA_integer_,
+    TRUE ~ Test2
+  )) %>%
+  mutate(Test3 = case_when(
+    rbinom(n(), 1, missingness[3]) == 1L ~ NA_integer_,
+    TRUE ~ Test3
+  ))
+
+#' 
+#' - - -
+#' 
+## -----------------------------------------------------------------------------
+data %>% count(Missing1 = is.na(Test1), Missing2 = is.na(Test2), Missing3 = is.na(Test3))
+
+#' 
+#' - - -
+#' 
+#' We can simply feed this data to `template_huiwalter`:
+#' 
+## -----------------------------------------------------------------------------
+template_huiwalter(data, outfile="huiwalter_MAR.txt")
+
+#' 
+#' What does that look like...?
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, comment=''---------------------------------------------------
+cleanup <- c(cleanup, "huiwalter_MAR.txt")
+cat(readLines("huiwalter_MAR.txt")[3:12], sep="\n")
+
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, comment=''---------------------------------------------------
+cleanup <- c(cleanup, "huiwalter_MAR.txt")
+cat(readLines("huiwalter_MAR.txt")[22:38], sep="\n")
+
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, comment=''---------------------------------------------------
+cleanup <- c(cleanup, "huiwalter_MAR.txt")
+cat(readLines("huiwalter_MAR.txt")[39:57], sep="\n")
+
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, comment=''---------------------------------------------------
+cleanup <- c(cleanup, "huiwalter_MAR.txt")
+cat(readLines("huiwalter_MAR.txt")[58:66], sep="\n")
+
+#' 
+#' . . .
+#' 
+#' NB:  `MMM` combinations have been removed!
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, comment=''---------------------------------------------------
+cleanup <- c(cleanup, "huiwalter_MAR.txt")
+cat(readLines("huiwalter_MAR.txt")[69:113], sep="\n")
+
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, comment=''---------------------------------------------------
+cleanup <- c(cleanup, "huiwalter_MAR.txt")
+cat(readLines("huiwalter_MAR.txt")[190:207], sep="\n")
+
+#' 
+#' 
+#' ## How to form populations
+#' 
+#' Clearly valid strategies:
+#' 
+#' - Temporal and/or spatial separation (e.g. farms)
+#' 
+#' - Experimental separation (different blocks of a trial)
+#' 
+#' - Separation based on testing other individuals within the same cohort (e.g. historical data)
+#' 
+#' ...
+#' 
+#' Clearly invalid strategies:
+#' 
+#' - Grouping based on the results of a diagnostic test being evaluated in the same individuals
+#' 
+#' ...
+#' 
+#' Potentially OK but sometimes risky strategies:
+#' 
+#' - Grouping by age, breed or sex (is sensitivity/specificity consistent?)
+#' 
+#' - Grouping based on the results of a diagnostic test not under consideration in the same individuals (is it correlated with one of the tests being evaluated?)
+#' 
+#' 
+#' ## Consistent sensitivity and specificity
+#' 
+#' Strategies to verify this:
+#' 
+#' - Eliminate one test at a time and re-run the model (if >=3 tests)
+#' 
+#' - Eliminate one population at a time and re-run the model (if >=3 populations, or >=2 populations with strong priors)
+#' 
+#' - Allow sensitivity or specificity to differ between populations (requires a lot of data) - see session 7
+#' 
+#' 
+#' ## Making your data missing
+#' 
+#' If we have >2 populations *and* >2 tests then we can eliminate one combination at a time!
+#' 
+#'   - This is a very useful form of cross-validation
+#' 
+#' - - -
+#' 
+#' Estimating the full model:
+#' 
+## ----results='hide'-----------------------------------------------------------
+template_huiwalter(data, "model_full.txt")
+results_full <- run.jags("model_full.txt")
+
+# Check convergence etc:
+# plot(results_full)
+# results_full
+
+summary_full <- summary(results_full, vars="^s") %>%
+  as.data.frame() %>%
+  rownames_to_column("Parameter") %>%
+  mutate(Model = "Full") %>%
+  select(Model, Parameter, Median, Lower95, Upper95)
+
+#' 
+#' - - -
+#' 
+#' How can we make a specific population missing?
+#' 
+## ----results='hide'-----------------------------------------------------------
+crossval_data <- data %>%
+  filter(Population != 1)
+
+template_huiwalter(crossval_data, "model_mp1.txt")
+results_crossval <- run.jags("model_mp1.txt")
+summary_crossval <- summary(results_crossval, vars="^s") %>%
+  as.data.frame() %>%
+  rownames_to_column("Parameter") %>%
+  mutate(Model = "MP1") %>%
+  select(Model, Parameter, Median, Lower95, Upper95) %>%
+  bind_rows(summary_full) %>%
+  arrange(Parameter, Model)
+
+#' 
+#' - - -
+#' 
+## -----------------------------------------------------------------------------
+summary_crossval
+
+#' 
+#' - - -
+#' 
+#' How many combinations of test missingness and population do we have?
+#' 
+## -----------------------------------------------------------------------------
+all_combinations <- data %>%
+  pivot_longer(-Population, names_to = "Test", values_to = "Result") %>%
+  filter(!is.na(Result)) %>%
+  count(Population, Test) %>%
+  print()
+
+#' 
+#' - - -
+#' 
+#' How can we make a specific combination of test and population missing?
+#' 
+## ----results='hide'-----------------------------------------------------------
+all_results <- vector('list', length=nrow(all_combinations))
+all_summary <- vector('list', length=nrow(all_combinations))
+
+crossval_data <- data %>%
+  mutate(Test1 = case_when(
+    Population == 1 ~ NA_integer_,
+    TRUE ~ Test1
+  ))
+
+template_huiwalter(crossval_data, "model_mc11.txt")
+all_results[[1]] <- run.jags("model_mc11.txt")
+# Assess convergence and sample size!
+all_summary[[1]] <- summary(all_results[[1]], vars="^s") %>%
+  as.data.frame() %>%
+  rownames_to_column("Parameter") %>%
+  mutate(Model = "MC11") %>%
+  select(Model, Parameter, Median, Lower95, Upper95)
+
+#' 
+#' 
+#' - - -
+#' 
+## ----results='hide'-----------------------------------------------------------
+crossval_data <- data %>%
+  mutate(Test2 = case_when(
+    Population == 1 ~ NA_integer_,
+    TRUE ~ Test2
+  ))
+
+template_huiwalter(crossval_data, "model_mc12.txt")
+all_results[[2]] <- run.jags("model_mc12.txt")
+# Assess convergence and sample size!
+all_summary[[2]] <- summary(all_results[[2]], vars="^s") %>%
+  as.data.frame() %>%
+  rownames_to_column("Parameter") %>%
+  mutate(Model = "MC12") %>%
+  select(Model, Parameter, Median, Lower95, Upper95)
+
+#' 
+#' 
+## ----echo=FALSE---------------------------------------------------------------
+cleanup <- c(cleanup, "model_mc11.txt", "model_mc12.txt", "model_full.txt", "model_mp1.txt")
+
+#' 
+#' . . .
+#' 
+#' etc...!
+#' 
+#' - - -
+#' 
+#' Are there any substantial disagreements:
+#' 
+## -----------------------------------------------------------------------------
+bind_rows(list(summary_full, all_summary)) %>% arrange(Parameter, Model)
+
+#' 
+#' # Practical session 6
+#' 
+#' ## Exercise 1 {.fragile}
+#' 
+#' For this exercise you will need the 3-test, 3-population dataset provided as "anthrax.Rdata" under day 3. Here is what the data look like:
+#' 
+## ----echo=FALSE---------------------------------------------------------------
+set.seed(2021-06-30)
+
+prevalence <- c(0.1, 0.15, 0.3)
+capsid <- 0.75
+sensitivity_ab <- c(0.99, 0.95, 0.8)
+sensitivity_c <- c(0.8, 0.75, 0.8)
+specificity <- c(0.99, 0.99, 0.96)
+N <- 666
+pops <- c(0.2, 0.3, 0.5)
+
+anthrax <- tibble(
+  Population = factor(sample(str_c("Population_", LETTERS[1:3]), N, TRUE, pops)),
+  Status = rbinom(N, 1, prevalence[as.numeric(Population)]),
+  Capsid = rbinom(N, 1, Status*capsid)
+) %>%
+  mutate( Sensitivity1 = case_when(
+    Population == "Population_C" ~ sensitivity_c[1],
+    TRUE ~ sensitivity_ab[1]
+  )) %>%
+  mutate( Sensitivity2 = case_when(
+    Population == "Population_C" ~ sensitivity_c[2],
+    TRUE ~ sensitivity_ab[2]
+  )) %>%
+  mutate( Sensitivity3 = case_when(
+    Population == "Population_C" ~ sensitivity_c[3],
+    TRUE ~ sensitivity_ab[3]
+  )) %>%
+  mutate(
+    PMB = rbinom(N, 1, Capsid*Sensitivity1 + (1-Capsid)*(1-specificity[1])),
+    AzureB = rbinom(N, 1, Capsid*Sensitivity2 + (1-Capsid)*(1-specificity[2])),
+    qPCR = rbinom(N, 1, Status*Sensitivity3 + (1-Status)*(1-specificity[3]))
+  ) %>%
+  select(-Status, -Capsid, -Sensitivity1, -Sensitivity2, -Sensitivity3) %>%
+  mutate_if(is.numeric, factor, levels=0:1, labels=c("Negative", "Positive")) %>%
+  arrange(Population)
+
+save(anthrax, file="anthrax.Rdata")
+
+summary(anthrax)
+
+#' 
+#' We have the result of 3 anthrax tests on cattle carcasses from 3 populations:
+#' 
+#'   - PMB (polychrome methylene blue) is a stain used to help detect the capsule of anthrax bacteria on blood smears
+#'   - AzureB is a similar stain that is easier to perform in low resource settings
+#'   - qPCR is a test for DNA of the anthrax bacteria
+#'   
+#' All populations consistent of carcasses reported as sudden death events in extensively farmed cattle in 3 different populated areas surrounding the Serengeti national park. The samples from populations A and B consisted of blood smears taken directly from the carcasses, while the samples for population C consisted of blood smears made from blood swabs taken from the carcasses. qPCR resutls were obtain from fragments of blood scraped from the blood smears.
+#' 
+#' Analyse the data using minimally informative priors for all parameters.  Try to identify any potential pairwise correlations between the tests:
+#' 
+#'   - Based on biological reasoning
+#'   - Based on empirical evidence
+#' 
+#' Exclude one population at a time and re-analyse the data.  What do you notice about your assumption of constant sensitivity and specificity across populations?
+#' 
+#' 
+#' ### Solution 1 {.fragile}
+#' 
+#' We can fit this model with no covariance terms relatively easily.  Note that the `template_huiwalter` function is quite happy with factors, so there is no need to convert anything to numbers - the function assumes that the reference level of the factor is the negative test:
+#' 
+## -----------------------------------------------------------------------------
+template_huiwalter(anthrax, "anthrax_model_nocov.txt", covariance=FALSE)
+results_nocov <- run.jags("anthrax_model_nocov.txt")
+results_nocov
+
+#' 
+#' Fitting the model with all covariance terms is possible but we get low effective sample sizes:
+#' 
+## -----------------------------------------------------------------------------
+template_huiwalter(anthrax, "anthrax_model_allcov.txt", covariance=TRUE)
+results_allcov <- run.jags("anthrax_model_allcov.txt")
+results_allcov
+
+#' 
+#' In order to interpret these results properly we would need to first get more samples e.g.:
+#' 
+## -----------------------------------------------------------------------------
+results_allcov <- extend.jags(results_allcov, sample=90000, method="parallel")
+results_allcov
+
+#' 
+#' Now we can see that there is some evidence for positive correlation between tests 1 and 2.  This makes biological sense because both are detecting the presence of a specific part of the bacterium (the capsid).  The estimates for correlation with test 3 are much closer to zero, except perhaps for the negative covariance in sensitivity between tests 2 and 3.
+#' 
+#' In this case we probably would want to run the model with only correlation between tests 1 and 2 active.  This is what that model would look like:
+#' 
+## ----echo=FALSE, comment=''---------------------------------------------------
+nocovmod <- paste(readLines("anthrax_model_nocov.txt"), collapse="\n")
+nocovmod <- gsub('# "covse12" <- 0', '"covse12" <- 0', nocovmod)
+nocovmod <- gsub('# "covsp12" <- 0', '"covsp12" <- 0', nocovmod)
+nocovmod <- gsub('# covse12 ~ ', 'covse12 ~ ', nocovmod)
+nocovmod <- gsub('covse12 <- ', '# covse12 <- ', nocovmod)
+nocovmod <- gsub('# covsp12 ~ ', 'covsp12 ~ ', nocovmod)
+nocovmod <- gsub('covsp12 <- ', '# covsp12 <- ', nocovmod)
+cat(nocovmod, file="anthrax_model_cov12.txt")
+cleanup <- c(cleanup, "anthrax_model_cov12.txt")
+cat(nocovmod)
+
+#' 
+#' And here are the results (with 50000 iterations to be sure the effective sample size will be high enough):
+#' 
+## -----------------------------------------------------------------------------
+results <- run.jags("anthrax_model_cov12.txt", sample=50000)
+results
+
+#' 
+#' Excluding one population at a time just involves doing something like the following:
+#' 
+## ----results='hide'-----------------------------------------------------------
+anthrax_noC <- anthrax %>% filter(Population != "Population_C")
+template_huiwalter(anthrax_noC, "anthrax_model_noC.txt", covariance=FALSE)
+
+#' 
+#' Then we need to go in and manually activate the covariance terms between tests 1 and 2.  Alternatively, if you want to use your programming skills then you could do something like the following:
+#' 
+## -----------------------------------------------------------------------------
+string <- paste(readLines("anthrax_model_noC.txt"), collapse="\n")
+string <- gsub('# "covse12" <- 0', '"covse12" <- 0', string)
+string <- gsub('# "covsp12" <- 0', '"covsp12" <- 0', string)
+string <- gsub('# covse12 ~ ', 'covse12 ~ ', string)
+string <- gsub('covse12 <- ', '# covse12 <- ', string)
+string <- gsub('# covsp12 ~ ', 'covsp12 ~ ', string)
+string <- gsub('covsp12 <- ', '# covsp12 <- ', string)
+cat(string, file="anthrax_model_noC.txt")
+
+#' 
+#' It would be nice if there was more granularity in the covariance argument for `template_huiwalter` ... and also in the se_priors and sp_priors arguments while I am at it!  I will try to do this at the same time as modifying the covariance terms so that they are easier to interpret, so watch for updates to runjags at some point (probably not very) soon.
+#' 
+#' We can run this model as before:
+#' 
+## -----------------------------------------------------------------------------
+results_noC <- run.jags("anthrax_model_noC.txt", sample=50000)
+results_noC
+
+#' 
+#' And compare to the results with all 3 populations:
+#' 
+## -----------------------------------------------------------------------------
+all_mcmc <- combine.mcmc(results, vars="^s", return.samples = 10000)
+noc_mcmc <- combine.mcmc(results_noC, vars="^s", return.samples = 10000)
+
+bind_rows(
+  as.data.frame(all_mcmc) %>% mutate(Model = "AllPopulations"),
+  as.data.frame(noc_mcmc) %>% mutate(Model = "NoPopulationC")
+) %>%
+  pivot_longer(-Model, names_to = "Parameter", values_to = "Estimate") %>%
+  ggplot() +
+  aes(x = Estimate, col = Model) +
+  geom_density() +
+  facet_wrap( ~ Parameter, scales="free")
+
+#' 
+#' Removing the population C has affected the estimated sensitivity of the two capsid tests (compared to the impact of removing either population A or B, which I have not shown here!).  Perhaps making blood smears directly from the carcasses recovers more intact capsids than making the smears from blood swabs?
+#' 
+#' 
+## ----echo=FALSE---------------------------------------------------------------
+cleanup <- c(cleanup, "anthrax_model_allcov.txt", "anthrax_model_nocov.txt", "anthrax_model_noC.txt")
+
+#' 
+#' 
+#' `r exercise_end()`
+#' 
+#' 
+#' ## Summary {.fragile}
+#' 
+#' - Validation of model assumptions is essential but tricky
+#' 
+#' - Where we have 2 tests and 2 populations it is difficult to do anything other than biological justification
+#' 
+#' - Dropping one population/test at a time is a useful form of cross-validation if we have enough data
+#' 
+#' - Some further reading:  Toft et al, STARD BLCM guidelines, covid paper for varying se across populations
+#' 
+## ----include=FALSE------------------------------------------------------------
+unlink(cleanup)
+

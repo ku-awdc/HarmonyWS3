@@ -1,11 +1,11 @@
 ---
 title: Session 1
 subtitle: A practical introduction to MCMC
-date: "2021-06-28"
+date: "2022-06-08"
 author:
   - Matt Denwood
 theme: metropolis
-aspectratio: 43
+aspectratio: 169
 colortheme: seahorse
 header-includes: 
   - \input{../rsc/preamble}
@@ -342,6 +342,9 @@ runjags.options(silent.jags=TRUE)
 results <- run.jags('basicjags.txt', n.chains=2, burnin=5000, sample=10000)
 ```
 
+. . .
+
+NOTE: if you have R version 4.2.x and runjags version 2.2.1 then you will see some warnings here - they can be ignored!
 
 First check the plots for convergence:
 

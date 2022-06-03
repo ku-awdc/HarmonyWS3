@@ -1,0 +1,989 @@
+params <-
+list(presentation = TRUE)
+
+#' ---
+#' title: Session 1
+#' subtitle: A practical introduction to MCMC
+#' date: "2022-06-08"
+#' author:
+#'   - Matt Denwood
+#' theme: metropolis
+#' aspectratio: 169
+#' colortheme: seahorse
+#' header-includes: 
+#'   - \input{../rsc/preamble}
+#' params:
+#'   presentation: TRUE
+#' output:
+#'   beamer_presentation:
+#'       pandoc_args: ["-t", "beamer"]
+#'       slide_level: 2
+#'   html_document: default
+#' ---
+#' 
+## ----rendering, eval=FALSE, include=FALSE-------------------------------------
+## # To render this as PDF (beamer) slides run:
+## rmarkdown::render('Session_1.Rmd', 'beamer_presentation', params=list(presentation=TRUE))
+## # And for html:
+## rmarkdown::render('Session_1.Rmd', 'html_document', params=list(presentation=FALSE))
+
+#' 
+## ----setup, include=FALSE-----------------------------------------------------
+library("tidyverse")
+library("runjags")
+set.seed(2021-06-22)
+
+# Reduce the width of R code output for PDF only:
+if(params$presentation) options(width=60)
+knitr::opts_chunk$set(echo = TRUE)
+
+# Reduce font size of R code output for Beamer:
+if(params$presentation){
+  knitr::knit_hooks$set(size = function(before, options, envir) {
+    if(before){
+      knitr::asis_output(paste0("\\", options$size))
+    }else{
+      knitr::asis_output("\\normalsize")
+    }
+  })
+  knitr::opts_chunk$set(size = "scriptsize")
+}
+
+# Collapse successive chunks:
+space_collapse <- function(x){ gsub("```\n*```r*\n*", "", x) }
+# Reduce space between chunks:
+space_reduce <- function(x){ gsub("```\n+```\n", "", x) }
+knitr::knit_hooks$set(document = space_collapse)
+
+# To collect temporary filenames:
+cleanup <- character(0)
+
+#' 
+#' 
+#'   
+#' # Background
+#' 
+#' 
+#' ## Diagnostic test evaluation: with gold standard = simple! {.fragile}
+#' 
+#' 
+## -----------------------------------------------------------------------------
+library("tidyverse")
+se <- c(1, 0.6)
+sp <- c(1, 0.9)
+N <- 1000
+prevalence <- 0.25
+
+data <- tibble(Status = rbinom(N, 1, prevalence)) %>%
+  mutate(Test1 = rbinom(N, 1, se[1]*Status + (1-sp[1])*(1-Status))) %>%
+  # Which is the same as:
+  mutate(Test1 = Status) %>%
+  mutate(Test2 = rbinom(N, 1, se[2]*Status + (1-sp[2])*(1-Status)))
+
+(twoXtwo <- with(data, table(Status, Test2)))
+
+#' 
+#' . . .
+#' 
+## -----------------------------------------------------------------------------
+(sensitivity <- twoXtwo[2,2] / sum(twoXtwo[2,1:2]))
+(specificity <- twoXtwo[1,1] / sum(twoXtwo[1,1:2]))
+
+#' 
+#' 
+#' ## Diagnostic test evaluation: no gold standard
+#' 
+#' Now we have both values of sensitivity and specificity <1...
+#' 
+## -----------------------------------------------------------------------------
+se <- c(0.9, 0.6)
+sp <- c(0.95, 0.9)
+N <- 1000
+prevalence <- 0.25
+
+data <- tibble(Status = rbinom(N, 1, prevalence)) %>%
+  mutate(Test1 = rbinom(N, 1, se[1]*Status + (1-sp[1])*(1-Status))) %>%
+  mutate(Test2 = rbinom(N, 1, se[2]*Status + (1-sp[2])*(1-Status)))
+
+with(data, table(Status, Test1))
+with(data, table(Status, Test2))
+
+#' 
+#' ---
+#' 
+#' In real life we don't know what `Status` is...
+#' 
+## -----------------------------------------------------------------------------
+(twoXtwo <- with(data, table(Test1, Test2)))
+
+(sensitivity_1 <- twoXtwo[2,2] / sum(twoXtwo[1:2,2]))
+(sensitivity_2 <- twoXtwo[2,2] / sum(twoXtwo[2,1:2]))
+(specificity_1 <- twoXtwo[1,1] / sum(twoXtwo[1:2,1]))
+(specificity_2 <- twoXtwo[1,1] / sum(twoXtwo[1,1:2]))
+
+#' . . .
+#' 
+#' So we will *always* under-estimate the Se and Sp of both tests!
+#' 
+#' ## The solution
+#' 
+#' - We need to assess the sensitivity and specificity of both tests against the true (but unknown) `Status` of each individual
+#' 
+#' - This unknown `Status` is called the `latent class`
+#'   - Therefore we need to run a `latent class model` ...
+#' 
+#' . . .
+#' 
+#' - How can we implement a latent class model?
+#'   - Frequentist statistical methods:
+#'       - possible, but difficult
+#'   - Bayesian statistical methods:
+#'       - easier and much more commonly done!
+#' 
+#' 
+#' ## Learning outcomes
+#' 
+#' By the end of the course you should be able to:
+#' 
+#' - Understand what a latent class model is, and how they can be used for diagnostic test evaluation
+#' 
+#' - Run basic latent class models using R and JAGS for real-world problems
+#' 
+#' - Interpret the results
+#' 
+#' - Understand the nuances and complexities associated with these types of analysis and the interpretation of the `latent class`
+#' 
+#' # Revision
+#' 
+#' ## Bayes Rule
+#' 
+#' Bayes' theorem is at the heart of Bayesian statistics:
+#' 
+#' $$P(\theta|Y) = \frac{P(\theta)\times P(Y|\theta)}{P(Y)}$$
+#' 
+#' . . .
+#' 
+#' Where:  $\theta$ is our parameter value(s);
+#' 
+#' $Y$ is the data that we have observed;
+#' 
+#' $P(\theta|Y)$ is the posterior probability of the parameter value(s);
+#' 
+#' $P(\theta)$ is the prior probability of the parameters;
+#' 
+#' $P(Y|\theta)$ is the likelihood of the data given the parameters value(s);
+#' 
+#' $P(Y)$ is the probability of the data, integrated over parameter space.
+#' 
+#' ---
+#' 
+#' - In practice we usually work with the following:
+#' 
+#' $$P(\theta|Y) \propto P(\theta)\times P(Y|\theta)$$
+#' 
+#' . . .
+#' 
+#' - Our Bayesian posterior is therefore always a combination of the likelihood of the data, and the parameter priors
+#' 
+#' - But for more complex models the distinction between what is 'data' and 'parameters' can get blurred!
+#' 
+#' ## MCMC
+#' 
+#' - A way of obtaining a numerical approximation of the posterior
+#' 
+#' - Highly flexible
+#' 
+#' - Not inherently Bayesian but most widely used in this context
+#' 
+#' - Assessing convergence is essential, otherwise we may not be summarising the true posterior
+#' 
+#' - Our chains are correlated so we need to consider the effective sample size
+#' 
+#' ## Bayesian MCMC vs Frequentist ML
+#' 
+#' Advantages:
+#' 
+#' - Very flexible modelling framework
+#' - More natural interpretation of confidence intervals (credible intervals)
+#' - Ability to incorporate prior information
+#' 
+#' . . .
+#' 
+#' Disadvantages:
+#' 
+#' - More computationally intensive
+#' - More emphasis on the practictioner to ensure the output is reliable
+#' - Requirement to incorporate prior information
+#' 
+#' 
+#' ## Everyone up to speed?
+#' 
+#' Any questions so far?  
+#' 
+#' Anything unclear?
+#' 
+#' 
+#' # Session 1: A practical introduction to MCMC
+#' 
+#' ## MCMC in Practice
+#' 
+#' - We can write a Metropolis algorithm ourselves, but this is complex and inefficient
+#' 
+#' - There are a number of general purpose langauages that allow us to define the problem and leave the details to the software:
+#' 
+#'   * WinBUGS/OpenBUGS
+#'     * Bayesian inference Using Gibbs Sampling
+#'   * JAGS
+#'     * Just another Gibbs Sampler
+#'   * Stan
+#'     * Named in honour of Stanislaw Ulam, pioneer of the Monte Carlo method
+#' 
+#' ## JAGS
+#' 
+#' - JAGS uses the BUGS language
+#' 
+#'   * This is a declarative (non-procedural) language
+#'   * The order of statements does not matter
+#'   * The compiler converts our model syntax into an MCMC algorithm with appropriately defined likelihood and prior
+#'   * You can only define each variable once!!!
+#' 
+#' . . .
+#' 
+#' - Different ways to run JAGS from R:
+#' 
+#'   - rjags, runjags, R2jags, jagsUI
+#' 
+#' - See http://runjags.sourceforge.net/quickjags.html
+#'   * This is also in the GitHub folder
+#' 
+#' ---
+#' 
+#' A simple JAGS model might look like this:
+#' 
+## ----include=FALSE------------------------------------------------------------
+model_definition <- "model{
+  # Likelihood part:
+  Positives ~ dbinom(prevalence, N)
+  
+  # Prior part:
+  prevalence ~ dbeta(1, 1)
+  
+  # Hooks for automatic integration with R:
+  #data# Positives, N
+  #monitor# prevalence
+  #inits# prevalence
+}
+"
+cat(model_definition, file='basicjags.txt')
+
+#' 
+## ----comment='', echo=FALSE---------------------------------------------------
+cat(model_definition, sep='\n')
+
+#' 
+#' ---
+#' 
+#' There are two model statements:
+#' 
+#' - The first:
+## ----eval=FALSE---------------------------------------------------------------
+## Positives ~ dbinom(prevalence, N)
+
+#' states that the number of `Positive` test samples is Binomially distributed with probability parameter `prevalence` and total trials `N`
+#' 
+#' . . .
+#' 
+#' - The second:
+## ----eval=FALSE---------------------------------------------------------------
+## prevalence ~ dbeta(1,1)
+
+#' states that our prior probability distribution for the parameter `prevalence` is Beta(1,1), which is the same as Uniform(0,1)
+#' 
+#' . . .
+#' 
+#' These are very similar to the likelihood and prior functions defined in the preparatory exercise (although this prior is less informative)
+#' 
+#' ---
+#' 
+#' The other lines in this model:
+#' 
+## ----eval=FALSE---------------------------------------------------------------
+## #data# Positives, N
+## #monitor# prevalence
+## #inits# prevalence
+
+#' are automated hooks that are only used by runjags
+#' 
+#' . . .
+#' 
+#' Compared to our Metropolis algorithm, this JAGS model is:
+#' 
+#'   * Eaiser to write and understand
+#'   * More efficient (lower autocorrelation)
+#'   * Faster to run
+#' 
+#' ---
+#' 
+#' To run this model, copy/paste the code above into a new text file called "basicjags.txt" in the same folder as your current working directory.  Then run:
+#' 
+## -----------------------------------------------------------------------------
+library('runjags')
+
+# data to be retrieved by runjags
+Positives <- 70
+N <- 100
+
+# initial values to be retrieved by runjags:
+prevalence <- list(chain1=0.05, chain2=0.95)
+
+#' 
+## ----include=FALSE------------------------------------------------------------
+runjags.options(silent.jags=TRUE)
+
+#' 
+## ----message=FALSE, warning=FALSE, results='hide'-----------------------------
+results <- run.jags('basicjags.txt', n.chains=2, burnin=5000, sample=10000)
+
+#' 
+#' . . .
+#' 
+#' NOTE: if you have R version 4.2.x and runjags version 2.2.1 then you will see some warnings here - they can be ignored!
+#' 
+#' First check the plots for convergence:
+#' 
+## ----eval=FALSE, include=TRUE-------------------------------------------------
+## plot(results)
+
+#' 
+## ----include=FALSE------------------------------------------------------------
+pt <- plot(results)
+
+#' 
+#' ---
+#' 
+#' Trace plots: the two chains should be stationary:
+#' 
+## ----echo=FALSE---------------------------------------------------------------
+print(pt[[1]])
+
+#' 
+#' ---
+#' 
+#' ECDF plots: the two chains should be very close to each other:
+#' 
+## ----echo=FALSE---------------------------------------------------------------
+print(pt[[2]])
+
+#' 
+#' ---
+#' 
+#' Histogram of the combined chains should appear smooth:
+#' 
+## ----echo=FALSE---------------------------------------------------------------
+print(pt[[3]])
+
+#' 
+#' ---
+#' 
+#' Autocorrelation plot tells you how well behaved the model is:
+#' 
+## ----echo=FALSE---------------------------------------------------------------
+print(pt[[4]])
+
+#' 
+#' ---
+#' 
+#' Note:  for multiple parameters, use the 'back' button to cycle through plots!
+#' 
+#' . . .
+#' 
+#' Then check the effective sample size and Gelman-Rubin statistic:
+#' 
+## -----------------------------------------------------------------------------
+results
+
+#' 
+#' 
+#' Reminder:  we want SSeff > 1000 and psrf < 1.05
+#' 
+#' 
+#' ## Introduction to practical sessions
+#' 
+#' Each practical session will consist of:
+#' 
+#'   1. Some general/philosophical points to consider
+#'   2. One or more practical exercises for everyone to complete
+#'   3. One or more additional (optional) exercise for those that finish the main exercise early
+#'   4. A wrap-up discussion to reinforce the key messages
+#' 
+#' . . .
+#' 
+#' Consideration points are given in the PDF
+#' 
+#' The exercises (and solutions) are only in the HTML versions
+#' 
+#' - - -
+#' 
+#' - We have approximately 1 hour per practical session
+#'   - 30-45 minutes for exercises, 15-30 minutes for discussion
+#' 
+#' . . .
+#' 
+#' - We will allocate you in pairs / threes to breakout rooms for the exercises (partly randomly, partly based on your institution)
+#'   - If you need help please use the "Ask For Help" feature from your breakout room
+#'   - Otherwise we will drop into the breakout rooms periodically to see how you are getting on!
+#' 
+#' # Practical Session 1
+#' 
+#' ## Points to consider
+#' 
+#' 1. What are the advantages and disadvantages of Bayesian MCMC relative to more standard frequentist likelihood-based methods?
+#' 
+#' 2. `Identifiability` refers to the ability of a model to extract useful information from a dataset for a particular set of parameters. What 3 things affect whether or not a model/parameter will be identifiable?
+#' 
+#' The exercises can be found in Session_1.html!
+#' 
+#' `r if(params$presentation) {"\\begin{comment}"}`
+#' 
+#' ## Exercise 1 {.fragile}
+#' 
+#' Follow these steps to run the basic JAGS model given above:
+#' 
+#' - Create a new text file in RStudio by clicking on `File` then `New File` then `Text file`
+#' 
+#' - Copy the following model definition into this text file:
+#' 
+## ----comment='', echo=FALSE---------------------------------------------------
+cat(model_definition, sep='\n')
+cat(model_definition, sep='\n', file='basicjags.txt')
+
+#' 
+#' - Save the file as `basicjags.txt` in a folder where you can find it again
+#' 
+#' - Set your R working directory to the same folder, by clicking on `Session` then `Set Working Directory` then `Choose Directory` and choosing the folder location
+#' 
+#' - Create a new R file in RStudio by clicking on `File` then `New File` then `R script`, and save the file as e.g. `Session 1 exercises.R` in the same folder
+#' 
+#' - Copy and paste the following R code into this R script file:
+#' 
+## ----eval=FALSE---------------------------------------------------------------
+## library('runjags')
+## 
+## # data to be retrieved by runjags
+## Positives <- 70
+## N <- 100
+## 
+## # initial values to be retrieved by runjags:
+## prevalence <- list(chain1=0.05, chain2=0.95)
+## 
+## # run the model:
+## results <- run.jags('basicjags.txt', n.chains=2, burnin=5000, sample=10000)
+## 
+## # check convergence based on trace plots:
+## plot(results)
+## 
+## # check effective sample size and psrf, and then interpret results:
+## results
+
+#' 
+#' - Take your time to play around with this code and make sure that (1) it works, and (2) you know what is going on
+#' 
+#' - Change the initial values for prevalence to 0.5 in both chains. Does it make a difference to the output?
+#' 
+#' - Change the number of samples to e.g. 50000 or 100 - what difference does this make?
+#' 
+#' - Ask for help if you have problems!
+#' 
+#' 
+#' ### Solution 1 {.fragile}
+#' 
+#' The result of running your R code should look like this (where lines starting with `##` show the output of running that line of code):
+#' 
+## -----------------------------------------------------------------------------
+# run the model:
+results <- run.jags('basicjags.txt', n.chains=2, burnin=5000, sample=10000)
+
+# Note: this is only commented out to save space in the exercise file!
+# plot(results)
+
+# check convergence and effective sample size, and then interpret results:
+results
+
+#' 
+## ----echo=FALSE---------------------------------------------------------------
+cleanup <- c(cleanup, "basicjags.txt")
+
+#' 
+#' Convergence is assessed in two ways:  firstly from the trace plots, and secondly from the psrf (which is the Gelman-Rubin statistic).  The effective sample size is SSeff.  Once you are happy that the model has converged and has enough of a sample size, then you can interpret the results (typically median and 95% confidence interval estimates).
+#' 
+#' We can change the initial values like so:
+#' 
+## -----------------------------------------------------------------------------
+# initial values to be retrieved by runjags:
+prevalence <- list(chain1=0.5, chain2=0.5)
+
+# run the model:
+results <- run.jags('basicjags.txt', n.chains=2, burnin=5000, sample=10000)
+
+# Note: this is only commented out to save space in the exercise file!
+# plot(results)
+# check convergence and effective sample size, and then interpret results:
+results
+
+#' 
+#' This only makes a very small difference to the inference, because the model converges (and we remove burnin) in either case. The posteriors being independent of the initial values is a key assumption of using MCMC!  But remember that there will always be a small difference because MCMC is an inherently random method.  We just need to make sure that the effective sample size is high enough that this inherent randomness does not impact our inference (at least not when rounding to a sensible number of significant figures!).
+#' 
+#' Increasing the number of samples to 50000 improves the effective sample size, and therefore reduces the small random changes in the posterior inference, but also takes longer to run.  Reducing the number of samples to 100 results in an effective sample size that is too small and therefore we get unreliable estimates that change every time the model is run!
+#' 
+#' ## Exercise 2 {.fragile}
+#' 
+#' We can fit the same model using frequentist maximum likelihood methods like this:
+#' 
+## -----------------------------------------------------------------------------
+Positives <- 70
+N <- 100
+
+# We can time how long this takes manually:
+system.time({
+  # The equivalent model to JAGS:
+  freq_model <- glm(cbind(Positives, N-Positives) ~ 1, family=binomial)
+})
+
+# The intercept of the GLM is on the logit scale, so we need to take the inverse logit transform to get the prevalence:
+plogis(coef(freq_model))
+plogis(confint(freq_model))
+
+## ----echo=FALSE---------------------------------------------------------------
+med1 <- as.numeric(summary(results)["prevalence","Median"])
+
+#' 
+#' Compare the results from the JAGS model and the frequentist model:
+#'   - Are there any differences in the inference?
+#'   - What about if you change the data to 7 positives out of 10?
+#'   - Are there any practical differences between JAGS and standard GLM models?
+#'   
+#' Change the priors for the JAGS model from Beta(1,1) to Beta(20,1)
+#'   - How does this affect the inference?
+#' 
+#' 
+#' ### Solution 2 {.fragile}
+#' 
+#' The prevalence estimate and 95% CI from the frequentist method is `r round(plogis(coef(freq_model)),2)` (`r round(plogis(confint(freq_model))[1],2)` - `r round(plogis(confint(freq_model))[2],2)`).  The equivalent estimates from the Bayesian method are:
+#' 
+## -----------------------------------------------------------------------------
+summary(results)["prevalence", c("Median","Lower95","Upper95")]
+
+#' 
+#' These are extremely close to each other in this case, although the same is not true with a smaller sample size:
+#' 
+## -----------------------------------------------------------------------------
+Positives <- 7
+N <- 10
+
+# Frequentist analysis:
+freq_model <- glm(cbind(Positives, N-Positives) ~ 1, family=binomial)
+plogis(coef(freq_model))
+plogis(confint(freq_model))
+
+# Bayesian analysis:
+results <- run.jags('basicjags.txt', n.chains=2, burnin=5000, sample=10000)
+
+# Note: this is only commented out to save space in the exercise file!
+# plot(results)
+results
+
+## ----echo=FALSE---------------------------------------------------------------
+med2 <- as.numeric(summary(results)["prevalence","Median"])
+
+#' 
+#' Notice that the median estimate for the Bayesian model has shifted from `r med1` to `r med2`, despite the maximum likelihood estimate remaining the same (0.7). This is due to the relatively larger impact of priors with smaller datasets.  All Bayesian models *must* include priors - even when you don't want to. We will return to this concept later today.
+#' 
+#' There is also a conceptual difference in the interpretation of the confidence intervals vs credible intervals - this is actually much easier when you are Bayesian!
+#' 
+#' The major downside of using MCMC is that it takes longer to run (glm runs in a few thousands of a second, whereas JAGS takes a few tenths of a second).  The other downside is that you have to check convergence and effective sample size manually, which is not the case for using glm().
+#' 
+#' 
+#' ## Exercise 3 {.fragile}
+#' 
+#' Up to now we have ignored issues of diagnostic test sensitivity and specificity.  Usually, however, we do not have a perfect test, so we do not know how many are truly positive or truly negative, rather than just testing positive or negative.  But we know that:
+#' 
+#' $$Prev_{obs} = (Prev_{true}\times Se) + ((1-Prev_{true})\times (1-Sp))$$
+#' $$\implies Prev_{true} = \frac{Prev_{obs}-(1-Sp)}{Se-(1-Sp)}$$
+#' 
+#' [The second equation assumes that the observed prevalence and sensitivity are both higher than 1 minus the specificity!]
+#' 
+#' Using JAGS allows us to add this additional complexity to our models by including a parameter for true prevalence that is related to observed prevalence by sensitivity and specificity parameters:
+#' 
+## ----include=FALSE------------------------------------------------------------
+model_definition_obsprev <- "model{
+  # Likelihood part:
+  Positives ~ dbinom(observed_prevalence, N)
+  
+  # Intermediate calculations:
+  observed_prevalence <- sensitivity * prevalence + (1-specificity) * (1-prevalence)
+  
+  # Prior part:
+  sensitivity ~ dbeta(1, 1)
+  specificity ~ dbeta(1, 1)
+  prevalence ~ dbeta(1, 1)
+  
+  # Hooks for automatic integration with R:
+  #data# Positives, N
+  #monitor# prevalence, sensitivity, specificity, observed_prevalence
+  #inits# prevalence, sensitivity, specificity
+}
+"
+cat(model_definition_obsprev, file='obsprevmodel.txt')
+
+#' 
+## ----comment='', echo=FALSE---------------------------------------------------
+cat(model_definition_obsprev, sep='\n')
+cleanup <- c(cleanup, "obsprevmodel.txt")
+
+#' 
+#' Copy this model to "obsprevmodel.txt" and run it yourself in JAGS.  Here is some additional R code that you will need:
+#' 
+## ---- eval=FALSE--------------------------------------------------------------
+## Positives <- 70
+## N <- 100
+## 
+## # initial values to be retrieved by runjags:
+## prevalence <- list(chain1=0.05, chain2=0.95)
+## sensitivity <- list(chain1=0.95, chain2=0.05)
+## specificity <- list(chain1=0.05, chain2=0.95)
+
+#' 
+#' - Make sure that the chains have converged and that your effective sample size is sufficient. Remember that now you have multiple monitored variables, so you need to cycle through the plots using the *back* and *forward* arrows on the plot window. The very last plot is a cross-correlation plot, which shows the pairwise correlation between the estimated parameter values. What do you notice about this?
+#' 
+#' - Look at the posteriors for the 4 parameters of interest.  What do you notice about identifiability?
+#' 
+#' - Now set the sensitivity and specificity parameters to fixed values of 80% and 99% by commenting out the `sensitivity ~ dbeta(1, 1)` line and adding `sensitivity <- 0.8` in the model, and similarly commenting out the `specificity ~ dbeta(1, 1)` line and adding `specificity <- 0.99` in the model (you will also need to remove sensitivity and specificity from the #inits# line). What happens to identifiability now?
+#' 
+#' 
+#' ### Solution 3 {.fragile}
+#' 
+## -----------------------------------------------------------------------------
+Positives <- 70
+N <- 100
+
+# initial values to be retrieved by runjags:
+prevalence <- list(chain1=0.05, chain2=0.95)
+
+# run the model:
+results <- run.jags('obsprevmodel.txt', n.chains=2, burnin=5000, sample=10000)
+
+# Note: this is only commented out to save space in the exercise file!
+# plot(results)
+# check convergence and effective sample size, and then interpret results:
+results
+
+#' 
+#' Convergence is OK and the sample size is sufficient for all parameters. The cross-correlation plot shows that the observed_prevalence parameter estimates are not correlated with those of the other parameters (green colours). However, the prevalence, sensitivity and specificity all show positive cross-correlation (yellow colours). Non-zero (i.e. either negative or positive) cross-correlation between parameters is a symptom of reduced identifiability of these parameters within the model. This is what causes the lower SSeff for these parameters relative to the observed prevalence parameter.
+#' 
+#' The posterior for `observed_prevalence` is the same as for `prevalence` in the old model.  But the posteriors for the new (true) `prevalence`, `sensitivity` and `specificity` are extremely wide!  The model is only able to identify the `observed_prevalence`, and not the other three parameters.  This is also reflected in the effective sample sizes.  There is simply not enough information to disentangle them - persuade yourself this is true by considering the following possibilities:
+#' 
+#'   - Is prevalence zero but the test is not very specific?
+#'   - Is prevalence 100% but the test is not very sensitive?
+#'   - Or anywhere in between?
+#' 
+#' The answer is that all are possible.  But we can make prevalence identifiable by fixing sensitivity and specificity:
+#' 
+## ----include=FALSE------------------------------------------------------------
+model_definition_obsprev <- "model{
+  # Likelihood part:
+  Positives ~ dbinom(observed_prevalence, N)
+  
+  # Intermediate calculations:
+  observed_prevalence <- sensitivity * prevalence + (1-specificity) * (1-prevalence)
+  
+  # Prior part:
+  #sensitivity ~ dbeta(1, 1)
+  #specificity ~ dbeta(1, 1)
+  sensitivity <- 0.8
+  specificity <- 0.99
+  prevalence ~ dbeta(1, 1)
+
+  # Hooks for automatic integration with R:
+  #data# Positives, N
+  #monitor# prevalence, sensitivity, specificity, observed_prevalence
+  #inits# prevalence
+}
+"
+cat(model_definition_obsprev, file='obsprevmodel_fixsesp.txt')
+
+#' 
+## ----comment='', echo=FALSE---------------------------------------------------
+cat(model_definition_obsprev, sep='\n')
+cleanup <- c(cleanup, "obsprevmodel_fixsesp.txt")
+
+#' 
+## -----------------------------------------------------------------------------
+results <- run.jags('obsprevmodel_fixsesp.txt', n.chains=2, burnin=5000, sample=10000)
+results
+
+#' Note that the true prevalence is estimated to be higher than the observed prevalence, because the test has a relatively low sensitivity.
+#' 
+#' If we don't want to fix sensitivity/specificity at specific values (which is generally a bad idea!) then we can give them a strong prior instead.  We will come back to this idea later!
+#' 
+#' 
+#' 
+#' ## Optional Exercise A {.fragile}
+#' 
+#' - Change the number of chains to 1 and 4
+#'   
+#'   * Remember that you will also need to change the initial values
+#'   * What affect does having different numbers of chains have?
+#' 
+#' - Try using the `run.jags` argument `method='parallel'` - what affect does this have?
+#' 
+#' 
+#' ### Solution A {.fragile}
+#' 
+#' The chains argument can be any positive integer, but you need to make sure that the number of initial values provided is consistent.  For example:
+#' 
+## -----------------------------------------------------------------------------
+prevalence <- list(chain1=0.05)
+sensitivity <- list(chain1=0.95)
+specificity <- list(chain1=0.05)
+
+results1 <- run.jags('obsprevmodel.txt', n.chains=1)
+results1
+
+prevalence <- list(chain1=0.05, chain2=0.4, chain3=0.6, chain4=0.95)
+sensitivity <- list(chain1=0.95, chain2=0.75, chain3=0.25, chain4=0.05)
+specificity <- list(chain1=0.05, chain2=0.25, chain3=0.75, chain2=0.95)
+results4 <- run.jags('obsprevmodel.txt', n.chains=4)
+results4
+
+#' 
+#' There are two differences:  firstly it is not possible to assess the psrf with only 1 chain (and it is harder to assess convergence generally), and secondly the effective sample size is higher with more chains as the samples are pooled (e.g. 10000 samples from 4 chains is 40000 samples).  So more chains is better.
+#' 
+#' The downside is that more chains take longer to run.  But we can offset this by parallelising:
+#' 
+## -----------------------------------------------------------------------------
+results4p <- run.jags('obsprevmodel.txt', n.chains=4, method='parallel')
+results4p
+
+#' 
+#' Each chain is run in parallel, so as long as you have at least as many processors as chains then you will reduce the run time.  [Note: the run time is not reduced for this example because the model already runs very quickly and there is a small fixed overhead cost with parallelising chains, but for models that take longer to run you would see a benefit]
+#'   
+#' There are a large number of other options to runjags.  Some highlights:
+#' 
+#'   - The method can be parallel or background or bgparallel
+#'   - You can use extend.jags to continue running an existing model (e.g. to increase the sample size)
+#'   - You can use coda::as.mcmc.list to extract the underlying MCMC chains (for one more more partially matched variable name)
+#'   - You can use the summary() method to extract summary statistics (for one more more partially matched variable name)
+#'     * See `?summary.runjags` and `?runjagsclass` for more information
+#' 
+#' ## Optional excersie B {.fragile}
+#' 
+#' There are three other ways of writing this type of model.  Using the simplest model as a template:
+#' 
+## ----comment='', echo=FALSE---------------------------------------------------
+cat(model_definition, sep='\n')
+
+#' 
+#' We can replace:
+#' 
+## ---- eval=FALSE--------------------------------------------------------------
+## Positives ~ dbinom(prevalence, N)
+
+#' 
+#' with:
+#' 
+## ---- eval=FALSE--------------------------------------------------------------
+## for(i in 1:N){
+##   Result[i] ~ dbern(prevalence)
+## }
+
+#' 
+#' or:
+#' 
+## ---- eval=FALSE--------------------------------------------------------------
+## for(i in 1:N){
+##   NegativePositive[i] ~ dcat(prevalence[1:2])
+## }
+## observed_probabilities[2] <- prevalence
+## observed_probabilities[1] <- 1 - prevalence
+
+#' 
+#' or:
+#' 
+## ---- eval=FALSE--------------------------------------------------------------
+## Tally[1:2] ~ dmulti(observed_probabilities[1:2], N)
+## 
+## observed_probabilities[2] <- prevalence
+## observed_probabilities[1] <- 1 - prevalence
+
+#' 
+#' In each case the data is different:
+#' - `dbern` needs the response to be a vector of 0 and 1 reflecting test results for individuals, but uses the same probability as dbinom
+#' - `dcat` needs the response to be a vector of 1 and 2 reflecting the outcome (1=negative, 2=positive) of the test, and uses a pair of probabilities reflecting the probability of being negative and probability of being positive
+#' - `dmulti` needs the response to be a Tally of the total number of negative tests and positive tests, and uses the same pair of probabilities as `dcat`
+#' 
+#' Try to implement these models in JAGS, and see what difference it makes to (a) the model inference, and (b) the amount of time that the model takes to run.
+#' 
+#' What are the advantages and disadvantages of each approach?
+#' 
+#' ### Solution B {.fragile}
+#' 
+#' Here is the model for dbern:
+#' 
+## ----include=FALSE------------------------------------------------------------
+model_definition <- "model{
+  # Likelihood part:
+  for(i in 1:N){
+    Result[i] ~ dbern(prevalence)
+  }
+  
+  # Prior part:
+  prevalence ~ dbeta(1, 1)
+  
+  # Hooks for automatic integration with R:
+  #data# Result, N
+  #monitor# prevalence
+  #inits# prevalence
+}
+"
+cat(model_definition, file='dbernmodel.txt')
+
+#' 
+## ----comment='', echo=FALSE---------------------------------------------------
+cat(model_definition, sep='\n')
+cleanup <- c(cleanup, "dbernmodel.txt")
+
+#' 
+#' And the necessary R code:
+#' 
+## -----------------------------------------------------------------------------
+Positives <- 70
+N <- 100
+
+# initial values to be retrieved by runjags:
+prevalence <- list(chain1=0.05, chain2=0.95)
+sensitivity <- list(chain1=0.95, chain2=0.05)
+specificity <- list(chain1=0.05, chain2=0.95)
+
+Result <- c(rep(0, N-Positives), rep(1, Positives))
+stopifnot(sum(Result)==Positives)
+dbern_results <- run.jags('dbernmodel.txt', n.chains=2)
+
+#' 
+#' Here is the model for dcat:
+#' 
+## ----include=FALSE------------------------------------------------------------
+model_definition <- "model{
+  # Likelihood part:
+  for(i in 1:N){
+    NegativePositive[i] ~ dcat(observed_probabilities[1:2])
+  }
+  observed_probabilities[2] <- prevalence
+  observed_probabilities[1] <- 1 - prevalence
+
+  # Prior part:
+  prevalence ~ dbeta(1, 1)
+  
+  # Hooks for automatic integration with R:
+  #data# NegativePositive, N
+  #monitor# prevalence
+  #inits# prevalence
+}
+"
+cat(model_definition, file='dcatmodel.txt')
+
+#' 
+## ----comment='', echo=FALSE---------------------------------------------------
+cat(model_definition, sep='\n')
+cleanup <- c(cleanup, "dcatmodel.txt")
+
+#' 
+#' And the necessary R code:
+#' 
+## -----------------------------------------------------------------------------
+NegativePositive <- c(rep(1, N-Positives), rep(2, Positives))
+dcat_results <- run.jags('dcatmodel.txt', n.chains=2)
+
+#' 
+#' And here is the model for dmulti:
+#' 
+## ----include=FALSE------------------------------------------------------------
+model_definition <- "model{
+  # Likelihood part:
+  Tally[1:2] ~ dmulti(observed_probabilities[1:2], N)
+
+  observed_probabilities[2] <- prevalence
+  observed_probabilities[1] <- 1 - prevalence
+ 
+  # Prior part:
+  prevalence ~ dbeta(1, 1)
+  
+  # Hooks for automatic integration with R:
+  #data# Tally, N
+  #monitor# prevalence
+  #inits# prevalence
+}
+"
+cat(model_definition, file='dmultimodel.txt')
+
+#' 
+## ----comment='', echo=FALSE---------------------------------------------------
+cat(model_definition, sep='\n')
+cleanup <- c(cleanup, "dmultimodel.txt")
+
+#' 
+#' And the necessary R code:
+#' 
+## -----------------------------------------------------------------------------
+Tally <- c(N-Positives, Positives)
+stopifnot(sum(Tally)==N)
+dmulti_results <- run.jags('dmultimodel.txt', n.chains=2)
+
+#' 
+#' And the results from each of them:
+#' 
+## -----------------------------------------------------------------------------
+dbern_results
+dcat_results
+dmulti_results
+
+#' 
+#' The key points are:
+#' 
+#'   - The posteriors are the same - these are the same model just formulated differently!
+#'   - The dcat and dbern versions take longer to run due to the loop
+#'   - The dcat and dbern versions would allow us to fit individual-level predictors to prevalence
+#'   - The advantage of dcat and dmulti is that we are not stuck with binary outcomes, i.e. we can have 3, 4, 5, etc different possible outcomes
+#' 
+#' You should also note that the dbern version has a higher effective sample size. The reason for this is that JAGS can use a conjugate sampler in this case; this outside the scope of this course but you can read up on what this means [here](https://en.wikipedia.org/wiki/Conjugate_prior))
+#' 
+#' If you are really interested in what kind of sampler JAGS is using for each parameter, you can always find out:
+#' 
+## -----------------------------------------------------------------------------
+extract(dbern_results, "samplers")
+extract(dcat_results, "samplers")
+extract(dmulti_results, "samplers")
+
+#' 
+#' But the internal mechanisms of JAGS is well outside the scope of this course!
+#' 
+#' `r if(params$presentation) {"\\end{comment}"}`
+#' 
+#' ## Summary {.fragile}
+#' 
+#' - MCMC allows flexibility in models BUT requires more computational resource and user awareness
+#'   * Convergence
+#'   * Effective sample size
+#' 
+#' - Bayesian methods allow priors to be used BUT necessitate that priors are used
+#' 
+#' - Models are less likely to be identifiable if they:
+#'   * Are more complex
+#'   * Have less informative priors
+#'   * Do not have sufficient data
+#' 
+#' - There is often a disparity between the model we would like to run and the model we can run given the data available
+#' 
+#' 
+## ----include=FALSE------------------------------------------------------------
+unlink(cleanup)
+

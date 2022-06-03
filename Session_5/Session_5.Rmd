@@ -31,6 +31,9 @@ source("../rsc/setup.R", local = environment())
 
 ## Recap
 
+NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
+
+
 - Adding more populations and more tests to a Hui-Walter model is technically easy
   - Particualrly if using template_huiwalter
   

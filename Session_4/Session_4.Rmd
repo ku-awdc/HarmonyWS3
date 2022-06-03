@@ -31,6 +31,8 @@ source("../rsc/setup.R", local = environment())
 
 ## Why stop at two tests?
 
+NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
+
 In *traditional* diagnostic test evaluation, one test is assumed to be a gold standard from which all other tests are evaluated
 
   - So it makes no difference if you assess one test at a time or do multiple tests at the same time
@@ -270,6 +272,8 @@ This generates self-contained model/data/initial values etc
 ```{r echo=FALSE, comment=''}
 cleanup <- c(cleanup, 'covidmodel.txt')
 cat(readLines('covidmodel.txt')[3:111], sep='\n')
+# TODO: needs fixing!
+knitr::knit_exit()
 ```
 
 ---

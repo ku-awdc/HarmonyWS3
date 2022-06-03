@@ -31,6 +31,9 @@ source("../rsc/setup.R", local = environment())
 
 ## Practical session
 
+NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
+
+
 There are 3 options:
 
 1. Finish up previous sessions

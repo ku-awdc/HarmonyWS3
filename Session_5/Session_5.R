@@ -1,0 +1,231 @@
+params <-
+list(presentation = TRUE)
+
+#' ---
+#' title: Session 5
+#' subtitle: How to interpret the latent class
+#' date: "2021-06-30"
+#' author:
+#'   - Matt Denwood
+#' theme: metropolis
+#' aspectratio: 43
+#' colortheme: seahorse
+#' header-includes: 
+#'   - \input{../rsc/preamble}
+#' params:
+#'   presentation: TRUE
+#' output:
+#'   beamer_presentation:
+#'       pandoc_args: ["-t", "beamer"]
+#'       slide_level: 2
+#'   html_document: default
+#' ---
+#' 
+## ----rendering, eval=FALSE, include=FALSE-------------------------------------
+## # To render this as PDF (beamer) slides run:
+## rmarkdown::render('Session_5.Rmd', 'beamer_presentation', params=list(presentation=TRUE))
+## # And for html:
+## rmarkdown::render('Session_5.Rmd', 'html_document', params=list(presentation=FALSE))
+
+#' 
+## ----setup, include=FALSE-----------------------------------------------------
+source("../rsc/setup.R", local = environment())
+
+#' 
+#' ## Recap
+#' 
+#' NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
+#' 
+#' 
+#' - Adding more populations and more tests to a Hui-Walter model is technically easy
+#'   - Particualrly if using template_huiwalter
+#'   
+#' - Verifying that the assumptions you are making are correct is harder
+#'   - The sensitivity and specificity must be consistent
+#'   - Pairwise correlation between tests should be accounted for
+#'     * With >2 tests
+#' 
+#' # How to interpret the latent class
+#' 
+#' 
+#' ## What exactly is our latent class?
+#' 
+#' Think about what exactly the latent class is in these situations:
+#' 
+#' 1. An antigen plus antibody test
+#' 
+#' . . .
+#' 
+#'   * The latent status is probably close to the true disease status
+#'   
+#' . . .
+#' 
+#' 2. Two antibody tests 
+#' 
+#' . . .
+#' 
+#'   * The latent status is actually 'producing antibodies'
+#'     * And not 'diseased' !!!
+#'   
+#' . . .
+#' 
+#' - What do we mean by "conditionally independent"?
+#' 
+#'   * Independent of each other conditional on the latent state
+#'   * But the latent state is NOT always *disease*
+#' 
+#' 
+#' ## A hierarchy of latent states
+#' 
+## ----echo=FALSE, out.width="100%", out.height="100%", fig.cap="Hierarchy of a simple 3-test system"----
+knitr::include_graphics("../rsc/dag3test.pdf")
+
+#' 
+#' 
+#' ## Branching of processes leading to test results
+#' 
+#' - Sometimes we have multiple tests detecting similar things
+#'   
+#'   - For example:  two antibody tests and one antigen test
+#'     - The antibody tests will be correlated
+#'   
+#' . . .
+#' 
+#' - Sometimes we have multiple tests on the same site / sample:
+#'   
+#'   - For example:  two throat swab tests vs a nasal swab test
+#'     - The throat swab tests will be correlated
+#' 
+#' . . .
+#' 
+#' - Or even three antibody tests where two are primed to detect the same thing, and one has a different target!
+#'   
+#'   - In this case all three tests are correlated
+#'   - But two are more strongly correlated
+#' 
+#' - - -
+#' 
+#' Parasites generally have more complex life cycles
+#' 
+## ----echo=FALSE, out.width="100%", out.height="100%", fig.cap="Life cycle of liver fluke"----
+knitr::include_graphics("../rsc/fluke.pdf")
+
+#' 
+#' - - -
+#' 
+#' So diagnostic tests are more difficult to interpret!
+#' 
+## ----echo=FALSE, out.width="100%", out.height="100%", fig.cap="Diagnostic tests for liver fluke"----
+knitr::include_graphics("../rsc/flukediagnostics.pdf")
+
+#' 
+#' - - -
+#' 
+#' What are the tests detecting?
+#' 
+#'   - Faecal egg counts
+#'     * Detect eggs from adult parasites
+#'     * These are produced 8-12 weeks after infection
+#'     * Eggs may persist in the gall bladder for some weeks after infection has been cleared
+#'     
+#'   - Antigen ELISA
+#'     * Detects presence of maturing/adult parasites in faeces
+#'     * This occurs from 5-8 weeks after infection
+#'     * Parasites only detectable during active infection
+#' 
+#'   - Antibody ELISA
+#'     * Triggered by migrating juveniles and adults
+#'     * Persists (although declining) for several months after infection has been cleared
+#' 
+#' 
+#' ## What is sensitivity and specificity?
+#' 
+#' The probability of test status conditional on true disease status?
+#' 
+#' . . .
+#' 
+#' The probability of test status conditional on the latent state?
+#' 
+#' . . .
+#' 
+#' So is the latent state the same as the true disease state?
+#' 
+#' . . .
+#' 
+#' Important quote:
+#' 
+#' "Latent class models involve pulling **something** out of a hat, and deciding to call it a rabbit"
+#' 
+#'   - Some Danish guy
+#' 
+#' 
+#' ## Publication of your results
+#' 
+#' STARD-BLCM:  A helpful structure to ensure that papers contain all necessary information
+#'   
+#'   - You should follow this and refer to it in your articles!
+#' 
+#' . . .
+#' 
+#' If you use the software, please cite JAGS:
+#' 
+#'   - Plummer, M. (2003). JAGS : A Program for Analysis of Bayesian Graphical Models Using Gibbs Sampling JAGS : Just Another Gibbs Sampler. Proceedings of the 3rd International Workshop on Distributed Statistical Computing (DSC 2003), March 20–22,Vienna, Austria. ISSN 1609-395X. https://doi.org/10.1.1.13.3406
+#' 
+#' ---
+#' 
+#' And R:
+#' 
+## -----------------------------------------------------------------------------
+citation()
+
+#' 
+#' ---
+#' 
+#' And runjags:
+#' 
+## -----------------------------------------------------------------------------
+citation("runjags")
+
+#' 
+#' 
+#' ## Between-test correlation structure
+#' 
+#' We have two antibody tests (with similar targets) plus one antigen test.  The two antibody tests give the same result more frequently together than with the antigen test.  How might the following two models differ in terms of the estimated sensitivity and specificity of the antigen test:
+#' 
+#' - Assumed conditional independence between all 3 tests
+#' 
+#' - Assumed correlation between the two antibody tests
+#' 
+#' ...
+#' 
+#' Answer:  the first model will produced biased estimates for the antigen test (downward) and also the antibody tests (upward).
+#' 
+#' ...
+#' 
+#' Note: this is only necessary to consider for >=3 tests - and remember the definition of the latent class!
+#' 
+#' 
+#' ## TODO
+#' 
+#' Have some scenarios for discussion
+#' 
+#' Sh
+#' 
+#' 
+#' # Discussion session 5 - should we correct for correlation?
+#' 
+#' TODO: 
+#' 
+#' Two tests - is there a point?
+#' 
+#' Multiple antibody tests - latent state is always antibody
+#' 
+#' What does "conditionally independent mean"?
+#' 
+#' Session:  discussion
+#' 
+#' 
+#' 
+## ----include=FALSE------------------------------------------------------------
+unlink(cleanup)
+

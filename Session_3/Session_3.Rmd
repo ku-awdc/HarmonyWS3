@@ -31,6 +31,8 @@ source("../rsc/setup.R", local = environment())
 
 ## Reminders
 
+NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
+
 All of the material is on the GitHub repository
 
   - We may tweak material as we go along

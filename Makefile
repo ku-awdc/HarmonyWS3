@@ -1,5 +1,4 @@
-SRC = $(wildcard Session_0/Session_*.Rmd)
-#SRC = $(wildcard Session_*/Session_*.Rmd)
+SRC = $(wildcard Session_*/Session_*.Rmd)
 
 PDF   = $(SRC:.Rmd=.pdf)
 HTML  = $(SRC:.Rmd=.html)
@@ -15,13 +14,13 @@ PURL = @Rscript -e "knitr::purl('$<', documentation = 2L, output = paste0(tools:
 	$(PURL)
 %.html:%.Rmd
 	$(RENDER_H)
-	-rm -rf ../Session*/Session*.log
+	-rm -rf Session*/Session*.log
 %Session_Preparation.pdf:%Session_Preparation.Rmd
 	$(RENDER_D)
-	-rm -rf ../Session*/Session*.log
+	-rm -rf Session*/Session*.log
 %.pdf:%.Rmd
 	$(RENDER_P)
-	-rm -rf ../Session*/Session*.log
+	-rm -rf Session*/Session*.log
 
 .PHONY: clean
 .PHONY: tidy
@@ -35,14 +34,15 @@ pdf:	$(PDF)
 html:	$(HTML)
 r: $(R)
 clean:
-	-rm -rf ../Session*/Session*.md
-	-rm -rf ../Session*/Session*.tex
-	-rm -rf ../Session*/Session*.pdf
-	-rm -rf ../Session*/Session*.html
-	-rm -rf ../Session*/Session*.log
-	-rm -rf ../Session*/Session*_files
+	-rm -rf Session*/Session*.md
+	-rm -rf Session*/Session*.tex
+	-rm -rf Session*/Session*.pdf
+	-rm -rf Session*/Session*.html
+	-rm -rf Session*/Session*.R
+	-rm -rf Session*/Session*.log
+	-rm -rf Session*/Session*_files
 tidy:
-	-rm -rf ../Session*/Session*.md
-	-rm -rf ../Session*/Session*.tex
-	-rm -rf ../Session*/Session*.log
-	-rm -rf ../Session*/Session*_files
+	-rm -rf Session*/Session*.md
+	-rm -rf Session*/Session*.tex
+	-rm -rf Session*/Session*.log
+	-rm -rf Session*/Session*_files

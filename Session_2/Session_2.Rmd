@@ -1,11 +1,11 @@
 ---
 title: Session 2
 subtitle: Basic Hui-Walter models
-date: "2021-06-28"
+date: "2022-06-08"
 author:
   - Matt Denwood
 theme: metropolis
-aspectratio: 43
+aspectratio: 169
 colortheme: seahorse
 header-includes: 
   - \input{../rsc/preamble}
@@ -43,7 +43,7 @@ source("../rsc/setup.R", environment())
 
 Binomial (always with two possible outcomes):
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.height=4}
 fdat <- tibble(Outcome = factor(rbinom(1e5, 1, 0.5)))
 ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_continuous(labels=NULL) + ylab(NULL)
 ```
@@ -52,7 +52,7 @@ ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_con
 
 Multinomial with two possible outcomes:
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.height=4}
 fdat <- tibble(Outcome = factor(apply(rmultinom(1e5, 1, c(1,1)),2,function(x) which(as.logical(x)))))
 ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_continuous(labels=NULL) + ylab(NULL)
 ```
@@ -61,7 +61,7 @@ ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_con
 
 Multinomial with four possible outcomes:
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.height=4}
 fdat <- tibble(Outcome = factor(apply(rmultinom(1e5, 1, c(1,1,1,1)),2,function(x) which(as.logical(x)))))
 ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_continuous(labels=NULL) + ylab(NULL)
 ```
@@ -724,8 +724,6 @@ results_manufacturer <- run.jags('hw_hyperprior.txt', n.chains=2)
 results_manufacturer
 results_si_1000
 ```
-
-Note: you might see some warnings like `Warning in if (class(temp) == "function") {: the condition has length > 1 and only the first element will be used` - this is due to a bug in runjags that will be fixed soon!
 
 Compared to the earlier results (results_si_1000), the sensitivity and specificty of test 1 are estimated to be higher, but the sensitivity of test 2 is estimated to be lower. In fact, the 95% CI for specificity of test 2 no longer contains the true simulation value (0.9). Having too much confidence in the performance of one test will always make all of the other tests look worse! So remember to carefully assess the studies on which you base your priors:  if these come from laboratory validation exercises (which typically involve spiked samples with extremely high concentrations of the target vs completely clean/sterile negative controls) then this may not be a realistic estimation of the sensitivity or specificity in the field.
 
