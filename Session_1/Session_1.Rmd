@@ -426,9 +426,9 @@ The exercises (and solutions) are only in the HTML versions
 
 . . .
 
-- We will allocate you in pairs / threes to breakout rooms for the exercises (partly randomly, partly based on your institution)
-  - If you need help please use the "Ask For Help" feature from your breakout room
-  - Otherwise we will drop into the breakout rooms periodically to see how you are getting on!
+- We will allocate you in pairs / threes for the exercises (partly randomly, partly based on your institution)
+  - If you need help just ask!
+  - Otherwise we will walk around to see how you are getting on!
 
 # Practical Session 1
 
