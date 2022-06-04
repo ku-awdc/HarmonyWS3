@@ -4,11 +4,11 @@ list(presentation = TRUE)
 #' ---
 #' title: Session 4
 #' subtitle: Multi-test, multi-population models
-#' date: "2021-06-29"
+#' date: "2022-06-09"
 #' author:
 #'   - Matt Denwood
 #' theme: metropolis
-#' aspectratio: 43
+#' aspectratio: 169
 #' colortheme: seahorse
 #' header-includes: 
 #'   - \input{../rsc/preamble}
@@ -29,12 +29,11 @@ list(presentation = TRUE)
 
 #' 
 ## ----setup, include=FALSE-----------------------------------------------------
+library('ggdag')
 source("../rsc/setup.R", local = environment())
 
 #' 
 #' ## Why stop at two tests?
-#' 
-#' NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
 #' 
 #' In *traditional* diagnostic test evaluation, one test is assumed to be a gold standard from which all other tests are evaluated
 #' 
@@ -102,6 +101,21 @@ data <- tibble(Population = sample(seq_len(Populations), N, replace=TRUE)) %>%
 #' - We need to take **extreme** care with these equations, and the multinomial tabulation!!!
 #'  
 #' 
+#' ## Degrees of freedom
+#' 
+#' - The amount of information (degrees of freedom) in the data depends on the number of tests and number of populations:
+#'   * 1 test, 1 population:  1 d.f.
+#'   * 2 tests, 1 population:  2 d.f.
+#'   * 2 tests, 2 populations:  3 d.f.
+#'   * 2 tests, 3 populations:  5 d.f.
+#'   
+#' . . .
+#' 
+#' - In general:
+#'   * d.f. = (2^tests - 1) x populations
+#'   * See:  Cheung et al, 2021
+#' 
+#' 
 #' ## Are the tests conditionally independent?
 #' 
 #' 
@@ -123,11 +137,57 @@ data <- tibble(Population = sample(seq_len(Populations), N, replace=TRUE)) %>%
 #' - In both situations we have pairwise correlation between some of the tests
 #' 
 #' 
+#' ## Directed Acyclic Graphs
+#' 
+#' - It may help you to visualise the relationships as a DAG:
+#' 
+## ----echo=FALSE, fig.height=4-------------------------------------------------
+covid_dag <- dagify(
+  infected ~ prevalence,
+  virus_throat ~ infected,
+  virus_nose ~ infected,
+  throat_pcr ~ virus_throat,
+  throat_antigen ~ virus_throat,
+  nose_antigen ~ virus_nose,
+#  throat_antigen ~ cross_reaction,
+#  nose_antigen ~ cross_reaction,
+  latent = c("infected", "virus_throat", "virus_nose"),
+  exposure = "prevalence",
+  outcome = c("throat_pcr", "throat_antigen", "nose_antigen"),
+  labels = c("infected"="infected", "prevalence"="prevalence",
+             "virus_throat"="virus_throat", "virus_nose"="virus_nose",
+             "throat_pcr"="throat_pcr", "throat_antigen"="throat_antigen",
+             "nose_antigen"="nose_antigen", "cross_reaction"="cross_reaction")
+)
+ggdag(covid_dag, text=FALSE, use_labels="label") + theme_dag_blank()
+
+#' 
+#' - - -
+#' 
+#' - Or with explicit antigen test crossreaction:
+#' 
+## ----echo=FALSE, fig.height=4-------------------------------------------------
+covid_dag <- dagify(
+  infected ~ prevalence,
+  virus_throat ~ infected,
+  virus_nose ~ infected,
+  throat_pcr ~ virus_throat,
+  throat_antigen ~ virus_throat,
+  nose_antigen ~ virus_nose,
+  throat_antigen ~ cross_reaction,
+  nose_antigen ~ cross_reaction,
+  latent = c("infected", "virus_throat", "virus_nose"),
+  exposure = "prevalence",
+  outcome = c("throat_pcr", "throat_antigen", "nose_antigen"),
+  labels = c("infected"="infected", "prevalence"="prevalence",
+             "virus_throat"="virus_throat", "virus_nose"="virus_nose",
+             "throat_pcr"="throat_pcr", "throat_antigen"="throat_antigen",
+             "nose_antigen"="nose_antigen", "cross_reaction"="cross_reaction")
+)
+ggdag(covid_dag, text=FALSE, use_labels="label") + theme_dag_blank()
+
+#' 
 #' ## Dealing with correlation: Covid example
-#' 
-#' TODO:  add DAG showing blocking path
-#' 
-#' TODO:  refer back to this from session 5
 #' 
 #' It helps to consider the data simulation as a (simplified) biological process (where my parameters are not representative of real life!):
 #' 
@@ -150,7 +210,7 @@ pcr_crossreact <- 0.01
 #' 
 #' . . .
 #' 
-#' Note:  cross-reactions are assumed to be independent!
+#' Note:  cross-reactions are assumed to be independent here!
 #' 
 #' ---
 #' 
@@ -231,8 +291,6 @@ covid_specificity
 #' 
 #' ## Model specification
 #' 
-#' TODO: show formulation as proportion of possible correlation
-#' 
 ## ---- eval=FALSE--------------------------------------------------------------
 ## prob[1,p] <-  prev[p] * ((1-se[1])*(1-se[2])*(1-se[3])
 ##                          +covse12 +covse13 +covse23) +
@@ -274,15 +332,13 @@ template_huiwalter(
 #' 
 ## ----echo=FALSE, comment=''---------------------------------------------------
 cleanup <- c(cleanup, 'covidmodel.txt')
-cat(readLines('covidmodel.txt')[3:111], sep='\n')
-# TODO: needs fixing!
-knitr::knit_exit()
+cat(readLines('covidmodel.txt')[3:150], sep='\n')
 
 #' 
 #' ---
 #' 
 ## ----echo=FALSE, comment=''---------------------------------------------------
-cat(readLines('covidmodel.txt')[-(1:111)], sep='\n')
+cat(readLines('covidmodel.txt')[-(1:150)], sep='\n')
 
 #' 
 #' ---
@@ -295,7 +351,7 @@ results
 
 #' 
 ## ----echo=FALSE---------------------------------------------------------------
-res <- summary(results)[,c(1:3,9,11)]
+res <- summary(results)[c(1:8,seq(9,19,by=2)),c(1:3,9,11)]
 res[] <- round(res, 3)
 knitr::kable(res)
 
@@ -310,16 +366,25 @@ knitr::kable(res)
 #' 
 #' - There must be a single column for the population (as a factor), and all of the other columns (either factor, logical or numeric) are interpreted as being test results
 #' 
+#' - - -
+#' 
+#' - Covariance terms are also calculated as proportion of possible correlation e.g.:
+#' 
+## ----echo=FALSE, comment=''---------------------------------------------------
+cat(readLines('covidmodel.txt')[(87:91)], sep='\n')
+
+#' 
 #' . . .
 #' 
-#' - Covariance terms are all deactivated by default
+#' - But covariance terms are all deactivated by default!
+#' 
 #' 
 #' ## Activating covariance terms
 #' 
 #' Find the lines for the covariances that we want to activate (i.e. the two Throat tests):
 #' 
 ## ---- echo=FALSE, comment=''--------------------------------------------------
-indexes <- 101:106
+indexes <- c(111:113, 116:119)
 cleanup <- c(cleanup, "covidmodel.txt")
 ml <- readLines('covidmodel.txt')
 cat(gsub('\t','',ml[indexes]), sep='\n')
@@ -330,7 +395,7 @@ cat(gsub('\t','',ml[indexes]), sep='\n')
 #' And edit so it looks like:
 #' 
 ## ---- echo=FALSE, comment=''--------------------------------------------------
-ml[indexes] <- c('	# Covariance in sensitivity between ThroatAG and ThroatPCR tests:', '	covse23 ~ dunif( (se[2]-1)*(1-se[3]) , min(se[2],se[3]) - se[2]*se[3] )  ## if the sensitivity of these tests may be correlated', '	 # covse23 <- 0  ## if the sensitivity of these tests can be assumed to be independent','	# Covariance in specificity between ThroatAG and ThroatPCR tests:', '	covsp23 ~ dunif( (sp[2]-1)*(1-sp[3]) , min(sp[2],sp[3]) - sp[2]*sp[3] )  ## if the specificity of these tests may be correlated', '	 # covsp23 <- 0  ## if the specificity of these tests can be assumed to be independent')
+ml[indexes] <- c('	# Covariance in sensitivity between ThroatAG and ThroatPCR tests:', '	covse23 ~ dunif( (se[2]-1)*(1-se[3]) , min(se[2],se[3]) - se[2]*se[3] )  ## if the sensitivity of these tests may be correlated', '	 # covse23 <- 0  ## if the sensitivity of these tests can be assumed to be independent','','	# Covariance in specificity between ThroatAG and ThroatPCR tests:', '	covsp23 ~ dunif( (sp[2]-1)*(1-sp[3]) , min(sp[2],sp[3]) - sp[2]*sp[3] )  ## if the specificity of these tests may be correlated', '	 # covsp23 <- 0  ## if the specificity of these tests can be assumed to be independent')
 cat(ml, file='covidmodel.txt', sep='\n')
 ml <- readLines('covidmodel.txt')
 cat(gsub('\t','',ml[indexes]), sep='\n')
@@ -339,21 +404,21 @@ cat(gsub('\t','',ml[indexes]), sep='\n')
 #' 
 #' ---
 #' 
-#' You will also need to uncomment out the relevant initial values for BOTH chains (on lines 117-122 and 128-133):
+#' You will also need to uncomment out the relevant initial values for BOTH chains (on lines 132-137 and 128-133):
 #' 
 ## ---- echo=FALSE, comment=''--------------------------------------------------
 ml <- readLines('covidmodel.txt')
-cat(gsub('\t','',ml[128:133]), sep='\n')
+cat(gsub('\t','',ml[143:148]), sep='\n')
 
 #' 
 #' So that they look like:
 #' 
 ## ---- echo=FALSE, comment=''--------------------------------------------------
-ml[c(119,122)] <- c('"covse23" <- 0', '"covsp23" <- 0')
-ml[c(130,133)] <- c('"covse23" <- 0', '"covsp23" <- 0')
+ml[c(134,137)] <- c('"covse23" <- 0', '"covsp23" <- 0')
+ml[c(145,148)] <- c('"covse23" <- 0', '"covsp23" <- 0')
 cat(ml, file='covidmodel.txt', sep='\n')
 ml <- readLines('covidmodel.txt')
-cat(gsub('\t','',ml[128:133]), sep='\n')
+cat(gsub('\t','',ml[143:148]), sep='\n')
 
 #' 
 #' ---
@@ -432,13 +497,6 @@ summary(results, vars="bpv")
 #' . . .
 #' 
 #' See `?runjags::add.summary` for more information on mutate
-#' 
-#' 
-#' ## Calculating degrees of freedom
-#' 
-#' TODO: add formula
-#' 
-#' Link to paper
 #' 
 #' 
 #' ## Practical considerations

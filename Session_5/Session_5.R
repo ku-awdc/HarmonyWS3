@@ -81,6 +81,7 @@ source("../rsc/setup.R", local = environment())
 knitr::include_graphics("../rsc/dag3test.pdf")
 
 #' 
+#' TODO: refer back to DAG
 #' 
 #' ## Branching of processes leading to test results
 #' 
@@ -210,6 +211,8 @@ citation("runjags")
 #' Have some scenarios for discussion
 #' 
 #' Sh
+#' 
+#' Number of unknown parameters - formula and pD
 #' 
 #' 
 #' # Discussion session 5 - should we correct for correlation?

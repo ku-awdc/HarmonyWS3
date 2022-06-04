@@ -4,11 +4,11 @@ list(presentation = TRUE)
 #' ---
 #' title: Session 3
 #' subtitle: Multi-population Hui-Walter models
-#' date: "2021-06-29"
+#' date: "2022-06-09"
 #' author:
 #'   - Matt Denwood
 #' theme: metropolis
-#' aspectratio: 43
+#' aspectratio: 169
 #' colortheme: seahorse
 #' header-includes: 
 #'   - \input{../rsc/preamble}
@@ -33,8 +33,6 @@ source("../rsc/setup.R", local = environment())
 
 #' 
 #' ## Reminders
-#' 
-#' NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
 #' 
 #' All of the material is on the GitHub repository
 #' 
@@ -73,7 +71,7 @@ source("../rsc/setup.R", local = environment())
 #' 
 #' Binomial (always with two possible outcomes):
 #' 
-## ----echo=FALSE---------------------------------------------------------------
+## ----echo=FALSE, fig.height=4-------------------------------------------------
 fdat <- tibble(Outcome = factor(rbinom(1e5, 1, 0.5)))
 ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_continuous(labels=NULL) + ylab(NULL)
 
@@ -82,7 +80,7 @@ ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_con
 #' 
 #' Multinomial with two possible outcomes:
 #' 
-## ----echo=FALSE---------------------------------------------------------------
+## ----echo=FALSE, fig.height=4-------------------------------------------------
 fdat <- tibble(Outcome = factor(apply(rmultinom(1e5, 1, c(1,1)),2,function(x) which(as.logical(x)))))
 ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_continuous(labels=NULL) + ylab(NULL)
 
@@ -91,7 +89,7 @@ ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_con
 #' 
 #' Multinomial with four possible outcomes:
 #' 
-## ----echo=FALSE---------------------------------------------------------------
+## ----echo=FALSE, fig.height=4-------------------------------------------------
 fdat <- tibble(Outcome = factor(apply(rmultinom(1e5, 1, c(1,1,1,1)),2,function(x) which(as.logical(x)))))
 ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_continuous(labels=NULL) + ylab(NULL)
 
@@ -100,7 +98,7 @@ ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_con
 #' 
 #' Multinomial with eight possible outcomes:
 #' 
-## ----echo=FALSE---------------------------------------------------------------
+## ----echo=FALSE, fig.height=4-------------------------------------------------
 fdat <- tibble(Outcome = factor(apply(rmultinom(1e5, 1, c(1,1,1,1,1,1,1,1)),2,function(x) which(as.logical(x)))))
 ggplot(fdat %>% count(Outcome)) + aes(x=Outcome, y=n) + geom_col() + scale_y_continuous(labels=NULL) + ylab(NULL)
 
@@ -325,13 +323,8 @@ data$prev[1] <- 0
 #' If we want to get numerically replicable results we need to add `.RNG.name` and `.RNG.seed` to the initial values, and an additional `#modules#` lecuyer hook to our model definition:
 #' 
 ## ---- eval=FALSE--------------------------------------------------------------
-## model{
-## 
-##   ## snip ##
-## 
 ##   #inits# .RNG.name, .RNG.seed
 ##   #modules# lecuyer
-## }
 
 #' 
 #' . . .

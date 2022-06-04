@@ -78,6 +78,7 @@ Think about what exactly the latent class is in these situations:
 knitr::include_graphics("../rsc/dag3test.pdf")
 ```
 
+TODO: refer back to DAG
 
 ## Branching of processes leading to test results
 
@@ -207,6 +208,8 @@ Note: this is only necessary to consider for >=3 tests - and remember the defini
 Have some scenarios for discussion
 
 Sh
+
+Number of unknown parameters - formula and pD
 
 
 # Discussion session 5 - should we correct for correlation?
