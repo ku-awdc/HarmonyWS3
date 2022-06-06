@@ -4,11 +4,11 @@ list(presentation = TRUE)
 #' ---
 #' title: Session 5
 #' subtitle: How to interpret the latent class
-#' date: "2021-06-30"
+#' date: "2022-06-09"
 #' author:
 #'   - Matt Denwood
 #' theme: metropolis
-#' aspectratio: 43
+#' aspectratio: 169
 #' colortheme: seahorse
 #' header-includes: 
 #'   - \input{../rsc/preamble}
@@ -34,16 +34,12 @@ source("../rsc/setup.R", local = environment())
 #' 
 #' ## Recap
 #' 
-#' NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
-#' 
-#' 
 #' - Adding more populations and more tests to a Hui-Walter model is technically easy
-#'   - Particualrly if using template_huiwalter
+#'   - Particularly if using template_huiwalter
 #'   
 #' - Verifying that the assumptions you are making are correct is harder
 #'   - The sensitivity and specificity must be consistent
 #'   - Pairwise correlation between tests should be accounted for
-#'     * With >2 tests
 #' 
 #' # How to interpret the latent class
 #' 
@@ -77,11 +73,29 @@ source("../rsc/setup.R", local = environment())
 #' 
 #' ## A hierarchy of latent states
 #' 
-## ----echo=FALSE, out.width="100%", out.height="100%", fig.cap="Hierarchy of a simple 3-test system"----
-knitr::include_graphics("../rsc/dag3test.pdf")
+#' 
+## ----echo=FALSE, fig.height=4-------------------------------------------------
+ab_dag <- dagify(
+  infected ~ prevalence,
+  antibodies ~ infected,
+  abtarget ~ antibodies,
+  abtarget2 ~ antibodies,
+  test1 ~ abtarget,
+  test2 ~ abtarget,
+  test3 ~ abtarget2,
+  latent = c("infected", "antibodies", "abtarget","abtarget2"),
+  exposure = "prevalence",
+  outcome = c("test1", "test2", "test3"),
+  labels = c("infected"="Infected", "prevalence"="Prevalence",
+             "antibodies"="Producing Antibodies", "abtarget"="Presence of Target 1","abtarget2"="Presence of Target 2",
+             "test1"="ELISA A", "test2"="ELISA B", "test3"="ELISA C")
+)
+ggdag(ab_dag, text=FALSE, use_labels="label") + theme_dag_blank()
 
 #' 
-#' TODO: refer back to DAG
+#' - - -
+#' 
+#' 
 #' 
 #' ## Branching of processes leading to test results
 #' 
@@ -103,6 +117,29 @@ knitr::include_graphics("../rsc/dag3test.pdf")
 #'   
 #'   - In this case all three tests are correlated
 #'   - But two are more strongly correlated
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, fig.height=4-------------------------------------------------
+covid_dag <- dagify(
+  infected ~ prevalence,
+  virus_throat ~ infected,
+  virus_nose ~ infected,
+  throat_pcr ~ virus_throat,
+  throat_antigen ~ virus_throat,
+  nose_antigen ~ virus_nose,
+#  throat_antigen ~ cross_reaction,
+#  nose_antigen ~ cross_reaction,
+  latent = c("infected", "virus_throat", "virus_nose"),
+  exposure = "prevalence",
+  outcome = c("throat_pcr", "throat_antigen", "nose_antigen"),
+  labels = c("infected"="infected", "prevalence"="prevalence",
+             "virus_throat"="virus_throat", "virus_nose"="virus_nose",
+             "throat_pcr"="throat_pcr", "throat_antigen"="throat_antigen",
+             "nose_antigen"="nose_antigen", "cross_reaction"="cross_reaction")
+)
+ggdag(covid_dag, text=FALSE, use_labels="label") + theme_dag_blank()
+
 #' 
 #' - - -
 #' 
@@ -141,11 +178,9 @@ knitr::include_graphics("../rsc/flukediagnostics.pdf")
 #' 
 #' ## What is sensitivity and specificity?
 #' 
-#' The probability of test status conditional on true disease status?
+#' - The probability of test status conditional on true disease status?
 #' 
-#' . . .
-#' 
-#' The probability of test status conditional on the latent state?
+#' - The probability of test status conditional on the latent state?
 #' 
 #' . . .
 #' 
@@ -157,7 +192,245 @@ knitr::include_graphics("../rsc/flukediagnostics.pdf")
 #' 
 #' "Latent class models involve pulling **something** out of a hat, and deciding to call it a rabbit"
 #' 
-#'   - Some Danish guy
+#'   - Nils Toft
+#' 
+#' 
+#' ## Model complexity
+#' 
+#' How many parameters are in my latent class model?
+#' 
+#' - 2 x k + d x (d - 1) + p
+#' - Where k=total tests, d=covarying tests, p=populations
+#' 
+#' . . .
+#' 
+#' BUT remember the effect of priors:
+#' 
+#' - Se ~ dbeta(1, 1) vs. Se ~ dbeta(2, 1) vs. Se ~ dbeta(2978, 234)
+#' 
+#' . . .
+#' 
+#' Effective number of parameters:
+#' 
+#' - pD (and therefore DIC) is ill-defined for LCM
+#' - p_waic (and WAIC) is a better bet - will be much easier in JAGS 5.0!
+#' 
+#' 
+#' 
+#' # Discussion session 5 - when should we correct for correlation?
+#' 
+#' Aims:
+#' 
+#' - To get you to think about when and why we should try to correct for correlation
+#' 
+#' - To get you to think about what is NOT achieved by including correlation terms
+#' 
+#' . . .
+#' 
+#' Main discussion points for each example:
+#' 
+#' - What is the latent class
+#' 
+#' - Which correlation terms should we include and why
+#' 
+#' . . .
+#' 
+#' Please feel free to hijack the discussion at any point :)
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, fig.height=4-------------------------------------------------
+eg_dag <- dagify(
+  infected ~ prevalence,
+#  antibodies ~ infected,
+#  abtarget ~ antibodies,
+  test1 ~ infected,
+  test2 ~ infected,
+  test3 ~ infected,
+  latent = c("infected"),
+  exposure = "prevalence",
+  outcome = c("test1", "test2", "test3"),
+  labels = c("infected"="Infected", "prevalence"="Prevalence",
+             "antigen"="Pathogen Detectable", "antibodies"="Producing Antibodies", "abtarget"="Presence of Target",
+             "test1"="Test A", "test2"="Test B", "test3"="Test C")
+)
+ggdag(eg_dag, text=FALSE, use_labels="label") + theme_dag_blank()
+
+#' 
+#' . . .
+#' 
+#' - No correlation to model!
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, fig.height=4-------------------------------------------------
+eg_dag <- dagify(
+  infected ~ prevalence,
+  antibodies ~ infected,
+#  abtarget ~ antibodies,
+  test1 ~ antibodies,
+  test2 ~ antibodies,
+  test3 ~ antibodies,
+  latent = c("infected","antibodies"),
+  exposure = "prevalence",
+  outcome = c("test1", "test2", "test3"),
+  labels = c("infected"="Infected", "prevalence"="Prevalence",
+             "antigen"="Pathogen Detectable", "antibodies"="Producing Antibodies", "abtarget"="Presence of Target",
+             "test1"="Test A", "test2"="Test B", "test3"="Test C")
+)
+ggdag(eg_dag, text=FALSE, use_labels="label") + theme_dag_blank()
+
+#' 
+#' . . .
+#' 
+#' - No correlation to model ... but "infected" is not the latent class
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, fig.height=4-------------------------------------------------
+eg_dag <- dagify(
+  infected ~ prevalence,
+  antibodies ~ infected,
+  abtarget ~ antibodies,
+  test1 ~ abtarget,
+  test2 ~ abtarget,
+  test3 ~ abtarget,
+  latent = c("infected","antibodies","abtarget"),
+  exposure = "prevalence",
+  outcome = c("test1", "test2", "test3"),
+  labels = c("infected"="Infected", "prevalence"="Prevalence",
+             "antigen"="Pathogen Detectable", "antibodies"="Producing Antibodies", "abtarget"="Presence of Target",
+             "test1"="Test A", "test2"="Test B", "test3"="Test C")
+)
+ggdag(eg_dag, text=FALSE, use_labels="label") + theme_dag_blank()
+
+#' 
+#' . . .
+#' 
+#' - Same as above!
+#' 
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, fig.height=4-------------------------------------------------
+eg_dag <- dagify(
+  infected ~ prevalence,
+  antigen ~ infected,
+  antibodies ~ infected,
+  abtarget ~ antibodies,
+  test1 ~ antigen,
+  test2 ~ abtarget,
+  test3 ~ abtarget,
+  latent = c("infected","antibodies","abtarget"),
+  exposure = "prevalence",
+  outcome = c("test1", "test2", "test3"),
+  labels = c("infected"="Infected", "prevalence"="Prevalence",
+             "antigen"="Pathogen Detectable", "antibodies"="Producing Antibodies", "abtarget"="Presence of Target",
+             "test1"="Test A", "test2"="Test B", "test3"="Test C")
+)
+ggdag(eg_dag, text=FALSE, use_labels="label") + theme_dag_blank()
+
+#' 
+#' . . .
+#' 
+#' - Tests B and C are correlated
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, fig.height=4-------------------------------------------------
+eg_dag <- dagify(
+  infected ~ prevalence,
+  antigen ~ infected,
+  antibodies ~ infected,
+  abtarget1 ~ antibodies,
+  abtarget2 ~ antibodies,
+  test1 ~ abtarget1,
+  test2 ~ abtarget2,
+  test3 ~ abtarget2,
+  latent = c("infected","antibodies","abtarget1","abtarget2"),
+  exposure = "prevalence",
+  outcome = c("test1", "test2", "test3"),
+  labels = c("infected"="Infected", "prevalence"="Prevalence",
+             "antigen"="Pathogen Detectable", "antibodies"="Producing Antibodies", "abtarget1"="Presence of Target 1", "abtarget2"="Presence of Target 2",
+             "test1"="Test A", "test2"="Test B", "test3"="Test C")
+)
+ggdag(eg_dag, text=FALSE, use_labels="label") + theme_dag_blank()
+
+#' 
+#' . . .
+#' 
+#' - All tests are correlated with respect to infected BUT infected is not the latent class
+#' 
+#' - Tests B and C are correlated with respect to antibodies - but maybe not substantially?
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, fig.height=4-------------------------------------------------
+eg_dag <- dagify(
+  infected ~ prevalence,
+  antigen ~ infected,
+  antibodies ~ infected,
+  test1 ~ antigen,
+  test2 ~ antibodies,
+  latent = c("infected","antibodies"),
+  exposure = "prevalence",
+  outcome = c("test1", "test2"),
+  labels = c("infected"="Infected", "prevalence"="Prevalence",
+             "antigen"="Pathogen Detectable", "antibodies"="Producing Antibodies", "abtarget"="Presence of Target",
+             "test1"="Test A", "test2"="Test B", "test3"="Test C")
+)
+ggdag(eg_dag, text=FALSE, use_labels="label") + theme_dag_blank()
+
+#' 
+#' . . .
+#' 
+#' - No correlation to model
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, fig.height=4-------------------------------------------------
+eg_dag <- dagify(
+  infected ~ prevalence,
+#  antigen ~ infected,
+  antibodies ~ infected,
+  test1 ~ antibodies,
+  test2 ~ antibodies,
+  latent = c("infected","antibodies"),
+  exposure = "prevalence",
+  outcome = c("test1", "test2"),
+  labels = c("infected"="Infected", "prevalence"="Prevalence",
+             "antigen"="Pathogen Detectable", "antibodies"="Producing Antibodies", "abtarget"="Presence of Target",
+             "test1"="Test A", "test2"="Test B", "test3"="Test C")
+)
+ggdag(eg_dag, text=FALSE, use_labels="label") + theme_dag_blank()
+
+#' 
+#' . . .
+#' 
+#' - No correlation to model - but "infected" is not the latent class
+#' 
+#' ## Other examples?
+#' 
+#' [Insert discussion here...]
+#' 
+#' ## Summary:  between-test correlation structure
+#' 
+#' My approach:
+#' 
+#' - If you have <3 tests then forget correlation BUT you must (always) consider what the latent class really means
+#' 
+#' . . .
+#' 
+#' - Otherwise, start with the biology.  Which pairwise correlation terms are plausible?
+#' 
+#' . . .
+#' 
+#' - If you have a LOT of terms then consider eliminating some based on the posterior being close to zero ... but check that other estimates do not change substantially between "full" and "reduced" models
+#' 
+#' . . .
+#' 
+#' - I dislike DIC ... maybe WAIC is better?
+#' 
 #' 
 #' 
 #' ## Publication of your results
@@ -187,46 +460,6 @@ citation()
 ## -----------------------------------------------------------------------------
 citation("runjags")
 
-#' 
-#' 
-#' ## Between-test correlation structure
-#' 
-#' We have two antibody tests (with similar targets) plus one antigen test.  The two antibody tests give the same result more frequently together than with the antigen test.  How might the following two models differ in terms of the estimated sensitivity and specificity of the antigen test:
-#' 
-#' - Assumed conditional independence between all 3 tests
-#' 
-#' - Assumed correlation between the two antibody tests
-#' 
-#' ...
-#' 
-#' Answer:  the first model will produced biased estimates for the antigen test (downward) and also the antibody tests (upward).
-#' 
-#' ...
-#' 
-#' Note: this is only necessary to consider for >=3 tests - and remember the definition of the latent class!
-#' 
-#' 
-#' ## TODO
-#' 
-#' Have some scenarios for discussion
-#' 
-#' Sh
-#' 
-#' Number of unknown parameters - formula and pD
-#' 
-#' 
-#' # Discussion session 5 - should we correct for correlation?
-#' 
-#' TODO: 
-#' 
-#' Two tests - is there a point?
-#' 
-#' Multiple antibody tests - latent state is always antibody
-#' 
-#' What does "conditionally independent mean"?
-#' 
-#' Session:  discussion
-#' 
 #' 
 #' 
 ## ----include=FALSE------------------------------------------------------------

@@ -5,6 +5,7 @@
 # set working directory and auto-cleanup anything created
 
 library("tidyverse")
+library("ggdag")
 library("runjags")
 library("knitr")
 runjags.options(silent.jags=TRUE, silent.runjags=TRUE)

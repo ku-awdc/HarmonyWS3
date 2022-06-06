@@ -60,7 +60,6 @@ cleanup <- character(0)
 
 #' 
 #' 
-#'   
 #' # Background
 #' 
 #' 
@@ -223,13 +222,53 @@ with(data, table(Status, Test2))
 #' Anything unclear?
 #' 
 #' 
+#' ## Practical points
+#' 
+#' Each session has 4 versions:
+#' 
+#' - .html = the main file for you guys (includes exercises + solutions, code is copy/pasteable)
+#' 
+#' - .R = an alternative if you prefer working with the R file directly
+#' 
+#' - .pdf = presentation (ignore as the html has the same content)
+#' 
+#' - .Rmd = source code (ignore unless you are interested)
+#' 
+#' . . .
+#' 
+#' Papers are under the "papers" directory (and will be deleted once the course is complete)
+#' 
+#' Other files (e.g. data) required for a specific session are under the session_* folders
+#' 
+#' . . . 
+#' 
+#' You can completely ignore the other files (e.g. Makefile) and folders (rsc) as these are just used to generate the different file formats
+#' 
+#' - - -
+#' 
+#' You will get warnings from runjags under R version 4.2.x e.g.:
+#' 
+## ----eval=FALSE---------------------------------------------------------------
+## Warning in c("plots", "vars", "mutate", "psrf.target", "normalise.mcmc",  :
+##   'length(x) = 21 > 1' in coercion to 'logical(1)'
+
+#' 
+#' To get rid of these install a bug-fix update to runjags using:
+#' 
+## ----eval=FALSE---------------------------------------------------------------
+## install.packages("runjags", repos=c("https://cran.rstudio.com/","https://ku-awdc.github.io/drat/"))
+
+#' 
+#' NOTE:  YOU ONLY NEED TO DO THIS IF YOU ARE RUNNING R VERSION 4.2.x
+#' 
+#'   
 #' # Session 1: A practical introduction to MCMC
 #' 
 #' ## MCMC in Practice
 #' 
 #' - We can write a Metropolis algorithm ourselves, but this is complex and inefficient
 #' 
-#' - There are a number of general purpose langauages that allow us to define the problem and leave the details to the software:
+#' - There are a number of general purpose languages that allow us to define the problem and leave the details to the software:
 #' 
 #'   * WinBUGS/OpenBUGS
 #'     * Bayesian inference Using Gibbs Sampling

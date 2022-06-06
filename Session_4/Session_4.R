@@ -29,7 +29,6 @@ list(presentation = TRUE)
 
 #' 
 ## ----setup, include=FALSE-----------------------------------------------------
-library('ggdag')
 source("../rsc/setup.R", local = environment())
 
 #' 

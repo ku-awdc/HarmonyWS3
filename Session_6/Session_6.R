@@ -8,7 +8,7 @@ list(presentation = TRUE)
 #' author:
 #'   - Matt Denwood
 #' theme: metropolis
-#' aspectratio: 43
+#' aspectratio: 169
 #' colortheme: seahorse
 #' header-includes: 
 #'   - \input{../rsc/preamble}
@@ -34,9 +34,6 @@ source("../rsc/setup.R", local = environment())
 #' 
 #' 
 #' ## Key model assumptions
-#' 
-#' NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
-#' 
 #' 
 #' The following model assumptions are critical:
 #' 
@@ -522,7 +519,7 @@ cleanup <- c(cleanup, "anthrax_model_allcov.txt", "anthrax_model_nocov.txt", "an
 #' 
 #' - Dropping one population/test at a time is a useful form of cross-validation if we have enough data
 #' 
-#' - Some further reading:  Toft et al, STARD BLCM guidelines, covid paper for varying se across populations
+#' - Some further reading:  Toft et al, STARD BLCM guidelines
 #' 
 ## ----include=FALSE------------------------------------------------------------
 unlink(cleanup)

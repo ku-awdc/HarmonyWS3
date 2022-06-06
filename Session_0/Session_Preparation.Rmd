@@ -33,7 +33,7 @@ Please also install the latest versions of the following R packages from CRAN:
 
 ```{r}
 packages <- c("tidyverse", "PriorGen", "rjags", "runjags", 
-                   "coda", "TeachingDemos")
+                   "coda", "TeachingDemos", "knitr", "ggdag")
 if(length(find.package(packages)) != length(packages)){
   install.packages(packages)
 }

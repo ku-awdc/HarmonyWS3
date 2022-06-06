@@ -33,7 +33,7 @@ set.seed(2021-06-18)
 #' 
 ## -----------------------------------------------------------------------------
 packages <- c("tidyverse", "PriorGen", "rjags", "runjags", 
-                   "coda", "TeachingDemos")
+                   "coda", "TeachingDemos", "knitr", "ggdag")
 if(length(find.package(packages)) != length(packages)){
   install.packages(packages)
 }

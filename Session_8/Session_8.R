@@ -4,11 +4,11 @@ list(presentation = TRUE)
 #' ---
 #' title: Session 8
 #' subtitle: Practical session
-#' date: "2021-07-01"
+#' date: "2022-06-10"
 #' author:
 #'   - Matt Denwood
 #' theme: metropolis
-#' aspectratio: 43
+#' aspectratio: 169
 #' colortheme: seahorse
 #' header-includes: 
 #'   - \input{../rsc/preamble}
@@ -36,14 +36,19 @@ source("../rsc/setup.R", local = environment())
 #' 
 #' NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
 #' 
+#' This is the final session of the course!
 #' 
-#' There are 3 options:
+#' We have three options to choose from:
 #' 
-#' 1. Finish up previous sessions
+#' 1. Finish up working on practical exercises from previous sessions
 #' 
-#' 2. Own data
+#' 2. Work on your own data and ask us for help/advice
 #' 
-#' 3. JAGS module
+#' 3. Look at how to implement custom distributions/functions via a JAGS module
+#' 
+#' 
+#' ## JAGS modules
+#' 
 #' 
 #' 
 #' TODO: redo so it is covariates

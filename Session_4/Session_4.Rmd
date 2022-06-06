@@ -26,7 +26,6 @@ rmarkdown::render('Session_3.Rmd', 'html_document', params=list(presentation=FAL
 ```
 
 ```{r setup, include=FALSE}
-library('ggdag')
 source("../rsc/setup.R", local = environment())
 ```
 
