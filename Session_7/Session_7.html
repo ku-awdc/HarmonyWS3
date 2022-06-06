@@ -11,7 +11,7 @@
 
 <meta name="author" content="Matt Denwood" />
 
-<meta name="date" content="2021-07-01" />
+<meta name="date" content="2022-06-10" />
 
 <title>Session 7</title>
 
@@ -367,7 +367,7 @@ pre code {
 <h3 class="subtitle">Incorporating imperfect sensitivity and specificity
 into more complex models</h3>
 <h4 class="author">Matt Denwood</h4>
-<h4 class="date">2021-07-01</h4>
+<h4 class="date">2022-06-10</h4>
 
 </div>
 
@@ -375,25 +375,6 @@ into more complex models</h3>
 <div id="recap" class="section level2">
 <h2>Recap</h2>
 <p>NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!</p>
-<p>TODO: redo so it is covariates</p>
-<ul>
-<li><p>covariates on Se/Sp</p></li>
-<li><p>covariates on prevalence (random effects)</p></li>
-<li><p>categorical predictors on prevalence (population/group becomes
-predictor) - example where we modify the code to add a fixed effect
-across e.g. 3 populations</p></li>
-<li><p>categorical predictors on se/sp: group by population and allow to
-vary - example with age group and covid paper</p></li>
-<li><p>continuous covariates and/or random effects on
-prevalence</p></li>
-<li><p>continuous covariates and/or random slope on se/sp - just mention
-as possible but ask for help!</p></li>
-<li><p>Bundle papers into dropbox zip</p></li>
-</ul>
-<p>Example: cervical cancer screening (covariates: age, pregnancy)</p>
-<p>TODO: Ask Sonja if she has any material (or Lef)</p>
-<p>Model at individual vs group level</p>
-<p>TODO: session 8 = work on own data</p>
 <p>Models for diagnostic test evaluation require:</p>
 <ul>
 <li>At least 2 tests</li>
@@ -408,9 +389,39 @@ as possible but ask for help!</p></li>
 </ul>
 </div>
 </div>
-<div id="incorporating-imperfect-sensitivity-and-specificity-into-more-complex-models" class="section level1">
-<h1>Incorporating imperfect sensitivity and specificity into more
-complex models</h1>
+<div id="incorporating-coefficients-prevalence" class="section level1">
+<h1>Incorporating coefficients: prevalence</h1>
+<div id="modelling-variation-in-infection-probability" class="section level2">
+<h2>Modelling variation in infection probability</h2>
+<ul>
+<li><p>Individuals may be at higher/lower risk of being infected due to
+known characteristics e.g.:</p>
+<ul>
+<li>Age</li>
+<li>Sex</li>
+<li>History</li>
+<li>Presence of co-infections</li>
+<li>Whatever</li>
+</ul></li>
+</ul>
+<div class="incremental">
+<ul>
+<li><p>There are three ways to deal with this:</p>
+<ol style="list-style-type: decimal">
+<li>Ignore it</li>
+<li>Group “populations” by these characteristics</li>
+<li>Embed a (preferably simple) generalised linear model within your
+LCM</li>
+</ol></li>
+</ul>
+</div>
+</div>
+<div id="grouping-populations" class="section level2">
+<h2>Grouping populations</h2>
+<p>Be careful that Se/Sp still consistent</p>
+<p>Random effects - code example</p>
+<p>Otero-Abad paper</p>
+</div>
 <div id="logistic-regression-in-jags" class="section level2">
 <h2>Logistic regression in JAGS</h2>
 <pre><code>model{
@@ -545,8 +556,13 @@ complex models</h1>
   #inits# intercept, beta1, beta2
 }</code></pre>
 </div>
-<div id="other-types-of-glmm" class="section level2">
-<h2>Other types of GL(M)M</h2>
+<div id="group-vs-individual-lr" class="section level2">
+<h2>Group vs Individual LR</h2>
+<p>Blocking at group level more efficient</p>
+<p>Individual level is possible but not advisable</p>
+</div>
+<div id="generating-code-for-a-lr" class="section level2">
+<h2>Generating code for a LR</h2>
 <p>You can use template.jags as inspiration:</p>
 <pre class="r"><code>template.jags(weight ~ group, family=&quot;gaussian&quot;, data=data, file=&quot;linear_model.txt&quot;)
 ## Your model template was created at &quot;linear_model.txt&quot; - it is highly advisable to examine the model syntax to be sure it is as intended
@@ -559,27 +575,27 @@ results &lt;- run.jags(&quot;linear_model.txt&quot;)
 <pre class="r"><code>results
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
-##                                                                       
-##                      Lower95   Median Upper95    Mean      SD     Mode
-## regression_precision 0.83043   1.9806  3.4246  2.0598 0.68222   1.9025
-## intercept              4.567   5.0327  5.4956  5.0326 0.23316   5.0286
-## group_effect[1]            0        0       0       0       0        0
-## group_effect[2]      -1.0151 -0.37278 0.28473 -0.3722 0.32952 -0.36978
-## deviance              40.199   42.697  48.651  43.385  2.6127   41.628
-## resid.sum.sq          8.7293    9.425  12.131  9.8114  1.2131   9.0344
+##                                                                        
+##                      Lower95   Median Upper95     Mean      SD     Mode
+## regression_precision 0.80102   1.9884  3.3962   2.0632 0.68379   1.8867
+## intercept             4.5736   5.0326   5.501   5.0304 0.23569   5.0335
+## group_effect[1]            0        0       0        0       0        0
+## group_effect[2]      -1.0261 -0.36987 0.28129 -0.37053 0.33192 -0.36447
+## deviance              40.181   42.718  48.666   43.417  2.6645   41.729
+## resid.sum.sq          8.7293   9.4399  12.229   9.8296  1.2486   9.0411
 ##                                                                
 ##                          MCerr MC%ofSD SSeff      AC.10    psrf
-## regression_precision 0.0051493     0.8 17553 -0.0042608  1.0001
-## intercept            0.0016487     0.7 20000 -0.0075925  1.0001
+## regression_precision 0.0053909     0.8 16089 -0.0095575  1.0001
+## intercept            0.0016666     0.7 20000  0.0036239  1.0002
 ## group_effect[1]             --      --    --         --      --
-## group_effect[2]      0.0023301     0.7 19999  0.0016167 0.99995
-## deviance              0.021061     0.8 15389 -0.0072374  1.0002
-## resid.sum.sq         0.0094366     0.8 16527 -0.0038572  1.0001
+## group_effect[2]       0.002366     0.7 19681  0.0039365 0.99998
+## deviance              0.021183     0.8 15822  0.0051324  1.0003
+## resid.sum.sq         0.0096478     0.8 16748  0.0048214  1.0002
 ## 
 ## Model fit assessment:
-## DIC = 46.72778  (range between chains: 46.69698 - 46.75859)
+## DIC = 46.77353  (range between chains: 46.73883 - 46.80823)
 ## [PED not available from the stored object]
-## Estimated effective number of parameters:  pD = 3.34241
+## Estimated effective number of parameters:  pD = 3.3568
 ## 
 ## Total time taken: 0.5 seconds</code></pre>
 <hr />
@@ -595,45 +611,47 @@ results &lt;- run.jags(&quot;linear_model.txt&quot;)
 <li>Interval censoring</li>
 </ul>
 </div>
-<div id="what-about-other-models" class="section level2">
-<h2>What about other models?</h2>
-<p>MCMC is highly flexible!</p>
-<div class="incremental">
-<p>We can have:</p>
-<ul>
-<li>Hidden Markov models</li>
-<li>State Space models</li>
-<li>Other types of latent class model</li>
-</ul>
-</div>
-<div class="incremental">
-<p>But does your data match your ambitions?</p>
-<ul>
-<li>All models can be specified</li>
-<li>Relatively few are identifiable</li>
-</ul>
+<div id="example" class="section level2">
+<h2>Example</h2>
+<p>Modify the code to add a single fixed effect across e.g. 3
+populations</p>
 </div>
 </div>
-<div id="before-you-go" class="section level2">
-<h2>Before you go…</h2>
+<div id="incorporating-coefficients-sensitivity-specificity" class="section level1">
+<h1>Incorporating coefficients: sensitivity / specificity</h1>
+<div id="what-if-diagnostic-tests-are-not-consistent-across-populations" class="section level2">
+<h2>What if diagnostic tests are not consistent across populations?</h2>
+<p>This time we can’t just ignore it!</p>
+<p>Solutions:</p>
 <ul>
-<li>Feedback on the course would be extremely welcome!
-<ul>
-<li><a href="https://www.survey-xact.dk/LinkCollector?key=RKMUENCXS11N" class="uri">https://www.survey-xact.dk/LinkCollector?key=RKMUENCXS11N</a></li>
-<li>I will send a reminder email later today with (the same) survey
-link</li>
-</ul></li>
-</ul>
-<div class="incremental">
-<ul>
-<li>Remember to keep an eye on the COST action website:
-<ul>
-<li><a href="http://harmony-net.eu" class="uri">http://harmony-net.eu</a></li>
-<li>Physical training schools are being run in September and accepting
-sign-ups now!</li>
-</ul></li>
+<li><p>Remove that population (and clearly state this in the
+paper)</p></li>
+<li><p>Allow the relevant parameter to vary between populations</p></li>
+<li><p>Use a very simple GLM on the relevant parameter(s)</p></li>
 </ul>
 </div>
+<div id="varying-between-populations" class="section level2">
+<h2>Varying between populations</h2>
+<p>Covid paper</p>
+</div>
+<div id="embedded-glm" class="section level2">
+<h2>Embedded GLM</h2>
+<p>Be careful with centering and contrasts</p>
+<p>Martinez paper</p>
+</div>
+<div id="general-points" class="section level2">
+<h2>General points</h2>
+<p>If you are interested in covariates on prevalence (rather than the
+se/sp directly) then use a different approach</p>
+<p>Inconsistent Se/Sp may happen in e.g. laboratory vs field settings,
+different sample types, etc</p>
+<p>Theoretically it is possible to incorporate this into the model, but
+if all populations have their own se/sp then the model collapses!</p>
+<p>Be VERY careful when prevalence and se/sp have the same covariate</p>
+<ul>
+<li>Probably best to balance populations by these covariates and then
+only include them as se/sp covariates?</li>
+</ul>
 </div>
 </div>
 <div id="practical-session-7" class="section level1">
@@ -641,13 +659,39 @@ sign-ups now!</li>
 <div id="points-to-consider" class="section level2 fragile">
 <h2 class="fragile">Points to consider</h2>
 <ol style="list-style-type: decimal">
-<li><p>When is there a benefit to adding imperfect test
-characteristics?</p></li>
-<li><p>When is there no real benefit?</p></li>
+<li><p>What is the optimal number of populations?</p></li>
+<li><p>What happens to identifiability when you deviate “too far” from
+the standard Hui-Walter model?</p></li>
 </ol>
 </div>
 <div id="exercise-1" class="section level2">
 <h2>Exercise 1</h2>
+<p>TODO: simulate many covariates that affect prevalence, what is the
+effect of:</p>
+<ul>
+<li><p>Using only the grouping that is a-priori presumed to be most
+important</p></li>
+<li><p>Blocking into as many groups as possible and fitting using random
+effects</p></li>
+<li><p>Using the main grouping as fixed and others as random</p></li>
+</ul>
+</div>
+<div id="solution-1" class="section level2">
+<h2>Solution 1</h2>
+<p>TODO</p>
+</div>
+<div id="exercise-2" class="section level2">
+<h2>Exercise 2</h2>
+<p>TODO: simulate data where se and prevalence both vary by the same
+covariate</p>
+<p>Show that this is an impossible dataset to analyse</p>
+</div>
+<div id="solution-2" class="section level2">
+<h2>Solution 2</h2>
+<p>TODO</p>
+</div>
+<div id="optional-exercise-a" class="section level2">
+<h2>Optional Exercise A</h2>
 <p>Simulate some data representing observed test outcomes along with one
 categorical predictor (with two levels) and one continuous predictor,
 with a single imperfect test. Use the following R code:</p>
@@ -717,8 +761,8 @@ sim_beta1
 ## [1] 0.0 0.6
 sim_beta2
 ## [1] 0.3</code></pre>
-<div id="solution-1" class="section level3">
-<h3>Solution 1</h3>
+<div id="solution-a" class="section level3">
+<h3>Solution A</h3>
 <p>We can modify the data to include outcome as follows:</p>
 <pre class="r"><code>se &lt;&lt;- 0.5
 sp &lt;&lt;- 0.99
@@ -738,16 +782,16 @@ results_lr
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
 ##                                                                             
 ##            Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
-## intercept  -1.5714 -1.3467 -1.1233 -1.3473 0.11458 -1.3491 0.0011117       1
+## intercept  -1.5729  -1.347 -1.1307 -1.3489 0.11287 -1.3424 0.0011331       1
 ## beta1[1]         0       0       0       0       0       0        --      --
-## beta1[2]  0.033124 0.33308 0.62848 0.33193 0.15079  0.3403 0.0014578       1
-## beta2       0.1339 0.43487 0.72683 0.43561 0.15232  0.4278 0.0014537       1
+## beta1[2]  0.037791 0.33394 0.62475 0.33431 0.14986 0.33376 0.0014537       1
+## beta2       0.1358  0.4369 0.72524 0.43689 0.15141 0.44061 0.0014175     0.9
 ##                                  
-##           SSeff     AC.10    psrf
-## intercept 10623 0.0043905  1.0001
-## beta1[1]     --        --      --
-## beta1[2]  10698  0.010119 0.99995
-## beta2     10979 -0.013472 0.99995
+##           SSeff      AC.10   psrf
+## intercept  9921 -0.0033473 1.0001
+## beta1[1]     --         --     --
+## beta1[2]  10627  0.0026324 1.0003
+## beta2     11410  0.0065509      1
 ## 
 ## Total time taken: 10.2 seconds</code></pre>
 <p>The median estimates for beta1 and beta1 are not too far away from
@@ -767,8 +811,8 @@ of doing this with continuous covariates unless you are willing to
 categorise them into a number of discrete bins.</p>
 </div>
 </div>
-<div id="exercise-2" class="section level2">
-<h2>Exercise 2</h2>
+<div id="optional-exercise-b" class="section level2">
+<h2>Optional Exercise B</h2>
 <p>Now analyse the same data using the following imperfect test
 model:</p>
 <pre><code>model{
@@ -800,9 +844,9 @@ using <code>PriorGen::findbeta()</code>) on these parameters, or by
 doing a sensitivity analysis by varying the se and sp parameters.</p>
 <p>Fit the model to the data. What has changed relative to the analysis
 from exercise 1?</p>
-<div id="solution-2" class="section level3">
-<h3>Solution 2</h3>
-<p>This is very similar to the solution for exercise 1, just with a
+<div id="solution-b" class="section level3">
+<h3>Solution B</h3>
+<p>This is very similar to the solution for exercise A, just with a
 different model:</p>
 <pre class="r"><code>results_imp &lt;- run.jags(&quot;logistic_imperfect.txt&quot;, n.chains=2, data=lr_data)
 # Remember to check convergence and effective sample size!
@@ -810,20 +854,20 @@ different model:</p>
 results_imp
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
-##                                                                          
-##            Lower95   Median   Upper95     Mean      SD     Mode     MCerr
-## intercept -0.69935 -0.37795 -0.060809 -0.37641 0.16308 -0.37597 0.0025622
-## beta1[1]         0        0         0        0       0        0        --
-## beta1[2]  0.053246  0.50046   0.95494  0.50223 0.23015  0.49716 0.0035425
-## beta2       0.2062  0.67376    1.1475  0.67608 0.23913   0.6671 0.0021779
-##                                          
-##           MC%ofSD SSeff     AC.10    psrf
-## intercept     1.6  4051 0.0003448       1
-## beta1[1]       --    --        --      --
-## beta1[2]      1.5  4221 0.0019596  1.0003
-## beta2         0.9 12056 -0.012052 0.99997
+##                                                                                
+##            Lower95  Median   Upper95     Mean      SD    Mode     MCerr MC%ofSD
+## intercept -0.69608 -0.3785 -0.054669 -0.37649 0.16385 -0.3888 0.0025812     1.6
+## beta1[1]         0       0         0        0       0       0        --      --
+## beta1[2]  0.038053 0.50048   0.94601  0.50224 0.23342 0.49055 0.0037062     1.6
+## beta2      0.19369 0.66675    1.1349  0.66893   0.241 0.66256  0.002138     0.9
+##                                  
+##           SSeff      AC.10   psrf
+## intercept  4030   0.016674 1.0011
+## beta1[1]     --         --     --
+## beta1[2]   3967   0.017528 1.0006
+## beta2     12707 -0.0043871 1.0001
 ## 
-## Total time taken: 26.7 seconds</code></pre>
+## Total time taken: 26.2 seconds</code></pre>
 <p>This model is slower than the logsitic regression model on the same
 data because the model is more complicated. But has it made any
 difference to the estimates? There are small differences in the
@@ -842,8 +886,8 @@ under-estimate the magnitude of this effect due to the inter-play
 between sensitivity, specificity and prevalence.</p>
 </div>
 </div>
-<div id="exercise-3" class="section level2">
-<h2>Exercise 3</h2>
+<div id="optional-exercise-c" class="section level2">
+<h2>Optional Exercise C</h2>
 <p>Now let’s make this more complicated. Simulate two different tests,
 where the first test is used for animals that have a value of 1 for the
 categorical predictor, and the second test is used for animals that have
@@ -893,9 +937,9 @@ lr_2test &lt;- lr_data %&gt;%
     Test == 2 ~ Obs2
   ))</code></pre>
 </div>
-<div id="solution-3" class="section level3">
-<h3>Solution 3</h3>
-<p>The first part of this is the same as the solution for exercise 1,
+<div id="solution-c" class="section level3">
+<h3>Solution C</h3>
+<p>The first part of this is the same as the solution for exercise A,
 just with the new observation:</p>
 <pre class="r"><code>results_lr_2t &lt;- run.jags(&quot;logistic_regression.txt&quot;, n.chains=2, data=lr_2test)
 # Remember to check convergence and effective sample size!
@@ -903,20 +947,20 @@ just with the new observation:</p>
 results_lr_2t
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
-##                                                                             
-##            Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
-## intercept  -1.5977 -1.3675 -1.1432  -1.369 0.11529 -1.3609 0.0011362       1
-## beta1[1]         0       0       0       0       0       0        --      --
-## beta1[2]    1.2759  1.5517  1.8518  1.5518 0.14567  1.5473 0.0013627     0.9
-## beta2     0.099966 0.36873 0.65884 0.36951 0.14313 0.37291 0.0012755     0.9
-##                                  
-##           SSeff      AC.10   psrf
-## intercept 10297 -0.0033428 1.0001
-## beta1[1]     --         --     --
-## beta1[2]  11428 -0.0064602 1.0001
-## beta2     12592 -0.0033943 1.0001
+##                                                                            
+##           Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
+## intercept -1.5886 -1.3679 -1.1407 -1.3688 0.11451 -1.3679 0.0011394       1
+## beta1[1]        0       0       0       0       0       0        --      --
+## beta1[2]   1.2775  1.5515  1.8481  1.5508 0.14564  1.5473 0.0013524     0.9
+## beta2     0.09521 0.36976  0.6488 0.36986 0.14239 0.37854 0.0012926     0.9
+##                                   
+##           SSeff       AC.10   psrf
+## intercept 10100 -0.00078679 1.0006
+## beta1[1]     --          --     --
+## beta1[2]  11598  -0.0057079 1.0002
+## beta2     12134   0.0042828      1
 ## 
-## Total time taken: 10.7 seconds</code></pre>
+## Total time taken: 10.6 seconds</code></pre>
 <p>You can see that we get quite different estimates for beta1 compared
 to before! This is because the diagnostic test is confounded with the
 categorical predictor. This confounding has caused us to over-estimate
@@ -930,18 +974,18 @@ results_imp_2t
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
 ##                                                                         
 ##            Lower95   Median  Upper95     Mean      SD     Mode     MCerr
-## intercept  -1.0163 -0.64648 -0.28471 -0.64509 0.18541 -0.64606 0.0048302
+## intercept  -1.0104 -0.65327 -0.28133 -0.65248 0.18862 -0.66202  0.004796
 ## beta1[1]         0        0        0        0       0        0        --
-## beta1[2]   0.34464   0.7554   1.1664  0.75152 0.20761  0.74387 0.0054625
-## beta2     0.080277  0.41974  0.76075   0.4199  0.1739  0.42864 0.0016343
+## beta1[2]   0.34853  0.76168   1.1698  0.75923 0.21184  0.75685 0.0053065
+## beta2     0.083322  0.41768  0.75449  0.42005 0.17217  0.42091 0.0015058
 ##                                         
 ##           MC%ofSD SSeff     AC.10   psrf
-## intercept     2.6  1473   0.23001 1.0034
+## intercept     2.5  1547   0.20395 1.0009
 ## beta1[1]       --    --        --     --
-## beta1[2]      2.6  1445   0.23221 1.0033
-## beta2         0.9 11323 0.0063662 1.0002
+## beta1[2]      2.5  1594   0.20451 1.0012
+## beta2         0.9 13073 -0.012465 1.0001
 ## 
-## Total time taken: 25.9 seconds</code></pre>
+## Total time taken: 25.4 seconds</code></pre>
 <p>In this case we control for the confounding between the test type and
 categorical predictor, and end up recovering more sensible estimates for
 beta1 (as well as the intercept and beta2).</p>
@@ -957,14 +1001,19 @@ separate those two effects without incorporating prior knowledge for the
 diagnostic test performance.</p>
 </div>
 </div>
-<div id="optional-exercises" class="section level2">
-<h2>Optional exercises</h2>
-<p>There are two options:</p>
-<ol style="list-style-type: decimal">
-<li><p>Re-visit the exercises (and optional exercises) from sessions 3-6
-that you have not already finished.</p></li>
-<li><p>Look at your own data and feel free to ask us questions</p></li>
-</ol>
+<div id="summary" class="section level2 fragile">
+<h2 class="fragile">Summary</h2>
+<ul>
+<li><p>Adding populations (or equivalently, covariates on prevalence)
+adds parameters but may add information</p>
+<ul>
+<li>But it is not always worthwile!</li>
+</ul></li>
+<li><p>Using covariates on sensitivity and specificity is
+tricky…</p></li>
+<li><p>Some further reading: Martinez et al, Stærk-Østergaard et
+al.</p></li>
+</ul>
 </div>
 </div>
 

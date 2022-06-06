@@ -4,11 +4,11 @@ list(presentation = TRUE)
 #' ---
 #' title: Session 7
 #' subtitle: Incorporating imperfect sensitivity and specificity into more complex models
-#' date: "2021-07-01"
+#' date: "2022-06-10"
 #' author:
 #'   - Matt Denwood
 #' theme: metropolis
-#' aspectratio: 43
+#' aspectratio: 169
 #' colortheme: seahorse
 #' header-includes: 
 #'   - \input{../rsc/preamble}
@@ -36,33 +36,6 @@ source("../rsc/setup.R", local = environment())
 #' 
 #' NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
 #' 
-#' 
-#' TODO: redo so it is covariates
-#' 
-#' - covariates on Se/Sp
-#' - covariates on prevalence (random effects)
-#' 
-#' - categorical predictors on prevalence (population/group becomes predictor) - example where we modify the code to add a fixed effect across e.g. 3 populations
-#' 
-#' - categorical predictors on se/sp:  group by population and allow to vary - example with age group and covid paper
-#' 
-#' - continuous covariates and/or random effects on prevalence
-#' 
-#' - continuous covariates and/or random slope on se/sp - just mention as possible but ask for help!
-#' 
-#' - Bundle papers into dropbox zip
-#' 
-#' 
-#' Example:  cervical cancer screening (covariates:  age, pregnancy)
-#' 
-#' TODO:  Ask Sonja if she has any material (or Lef)
-#' 
-#' Model at individual vs group level
-#' 
-#' 
-#' TODO:  session 8 = work on own data
-#' 
-#' 
 #' Models for diagnostic test evaluation require:
 #' 
 #'   - At least 2 tests
@@ -78,9 +51,38 @@ source("../rsc/setup.R", local = environment())
 #'   - What exactly is the latent class?
 #' 
 #' 
-#' # Incorporating imperfect sensitivity and specificity into more complex models
+#' # Incorporating coefficients:  prevalence
+#' 
+#' ## Modelling variation in infection probability
+#' 
+#' - Individuals may be at higher/lower risk of being infected due to known characteristics e.g.:
+#' 
+#'   * Age
+#'   * Sex
+#'   * History
+#'   * Presence of co-infections
+#'   * Whatever
+#' 
+#' . . .
+#' 
+#' - There are three ways to deal with this:
+#' 
+#'   1. Ignore it
+#'   1. Group "populations" by these characteristics
+#'   1. Embed a (preferably simple) generalised linear model within your LCM
+#' 
+#' 
+#' ## Grouping populations
+#' 
+#' Be careful that Se/Sp still consistent
+#' 
+#' Random effects - code example
+#' 
+#' Otero-Abad paper
+#' 
 #' 
 #' ## Logistic regression in JAGS
+#' 
 #' 
 ## ----echo=FALSE, comment=""---------------------------------------------------
 lrmod <- "model{
@@ -260,7 +262,14 @@ cat(lrmod)
 cat(lrmod, file="logistic_2test.txt")
 
 #' 
-#' ## Other types of GL(M)M
+#' ## Group vs Individual LR
+#' 
+#' Blocking at group level more efficient
+#' 
+#' Individual level is possible but not advisable
+#' 
+#' 
+#' ## Generating code for a LR
 #' 
 #' You can use template.jags as inspiration:
 #' 
@@ -298,51 +307,87 @@ results
 #'   - Spline terms
 #'   - Interval censoring
 #' 
+#' ## Example
 #' 
-#' ## What about other models?
+#' Modify the code to add a single fixed effect across e.g. 3 populations
 #' 
-#' MCMC is highly flexible!
 #' 
-#' . . . 
+#' # Incorporating coefficients:  sensitivity / specificity
 #' 
-#' We can have:
+#' ## What if diagnostic tests are not consistent across populations?
 #' 
-#'   - Hidden Markov models
-#'   - State Space models
-#'   - Other types of latent class model
+#' This time we can't just ignore it!
 #' 
-#' . . .
+#' Solutions:
 #' 
-#' But does your data match your ambitions?
+#' - Remove that population (and clearly state this in the paper)
 #' 
-#'   - All models can be specified
-#'   - Relatively few are identifiable
+#' - Allow the relevant parameter to vary between populations
 #' 
-#' ## Before you go...
+#' - Use a very simple GLM on the relevant parameter(s)
 #' 
-#' - Feedback on the course would be extremely welcome!
-#'   - https://www.survey-xact.dk/LinkCollector?key=RKMUENCXS11N
-#'   - I will send a reminder email later today with (the same) survey link
+#' ## Varying between populations
 #' 
-#' . . .
+#' Covid paper
 #' 
-#' - Remember to keep an eye on the COST action website:
-#'   - http://harmony-net.eu
-#'   - Physical training schools are being run in September and accepting sign-ups now!
+#' ## Embedded GLM
+#' 
+#' Be careful with centering and contrasts
+#' 
+#' Martinez paper
+#' 
+#' ## General points
+#' 
+#' If you are interested in covariates on prevalence (rather than the se/sp directly) then use a different approach
+#' 
+#' Inconsistent Se/Sp may happen in e.g. laboratory vs field settings, different sample types, etc
+#' 
+#' Theoretically it is possible to incorporate this into the model, but if all populations have their own se/sp then the model collapses!
+#' 
+#' Be VERY careful when prevalence and se/sp have the same covariate
+#' 
+#' - Probably best to balance populations by these covariates and then only include them as se/sp covariates?
+#' 
+#' 
 #' 
 #' 
 #' # Practical session 7
 #' 
 #' ## Points to consider {.fragile}
 #' 
-#' 1. When is there a benefit to adding imperfect test characteristics?
+#' 1. What is the optimal number of populations?
 #' 
-#' 2. When is there no real benefit?
+#' 2. What happens to identifiability when you deviate "too far" from the standard Hui-Walter model?
 #' 
 #' 
 #' `r exercise_start()`
 #' 
 #' ## Exercise 1
+#' 
+#' TODO:  simulate many covariates that affect prevalence, what is the effect of:
+#' 
+#' - Using only the grouping that is a-priori presumed to be most important
+#' 
+#' - Blocking into as many groups as possible and fitting using random effects
+#' 
+#' - Using the main grouping as fixed and others as random
+#' 
+#' ## Solution 1
+#' 
+#' TODO
+#' 
+#' ## Exercise 2
+#' 
+#' TODO:  simulate data where se and prevalence both vary by the same covariate
+#' 
+#' Show that this is an impossible dataset to analyse
+#' 
+#' ## Solution 2
+#' 
+#' TODO
+#' 
+#' 
+#' ## Optional Exercise A
 #' 
 #' Simulate some data representing observed test outcomes along with one categorical predictor (with two levels) and one continuous predictor, with a single imperfect test.  Use the following R code:
 #' 
@@ -405,7 +450,7 @@ sim_beta2
 
 #' 
 #' 
-#' ### Solution 1
+#' ### Solution A
 #' 
 #' We can modify the data to include outcome as follows:
 #' 
@@ -439,7 +484,7 @@ results_lr
 #' The other thing to note is that this model takes a lot longer to run than a Hui-Walter model - this is due to looping over individuals with individual covariates.  If we only had categorical predictors then we would be much better off collapsing the observed combinations of categorical predictors together, so that our outcome was Binomial and not just Bernoulli (in this case we would be looping over 2 categorical predictor levels, and not 1000 observations).  However, there is no way of doing this with continuous covariates unless you are willing to categorise them into a number of discrete bins.
 #' 
 #' 
-#' ## Exercise 2
+#' ## Optional Exercise B
 #' 
 #' Now analyse the same data using the following imperfect test model:
 #' 
@@ -452,9 +497,9 @@ cat(readLines("logistic_imperfect.txt"), sep="\n")
 #' Fit the model to the data.  What has changed relative to the analysis from exercise 1?
 #' 
 #' 
-#' ### Solution 2
+#' ### Solution B
 #' 
-#' This is very similar to the solution for exercise 1, just with a different model:
+#' This is very similar to the solution for exercise A, just with a different model:
 #' 
 ## -----------------------------------------------------------------------------
 results_imp <- run.jags("logistic_imperfect.txt", n.chains=2, data=lr_data)
@@ -468,7 +513,7 @@ results_imp
 #' So in this case we don't really gain anything by using an imperfect test model.  We might as well just say that the imperfect diagnostic test characteristics are one part of the variability that is captured by the Binomial distribution response, and that the intercept reflects the average observed prevalence and not the average true prevalence.  The only exception to this is where one or more of the covariates has an extremely strong affect on the true prevalence, in which case we may under-estimate the magnitude of this effect due to the inter-play between sensitivity, specificity and prevalence.
 #' 
 #' 
-#' ## Exercise 3
+#' ## Optional Exercise C
 #' 
 #' Now let's make this more complicated.  Simulate two different tests, where the first test is used for animals that have a value of 1 for the categorical predictor, and the second test is used for animals that have a value of 2 for the categorical predictor (these could be animal groups or farms, for example).  The first test has the same sensitivity and specificity as before, but the second test has higher sensitivity but lower specifity (both are 95% for this test).  Write the R code yourself if you want to, otherwise see the hint below (just above the solution).
 #' 
@@ -499,9 +544,9 @@ lr_2test <- lr_data %>%
 
 #' 
 #' 
-#' ### Solution 3
+#' ### Solution C
 #' 
-#' The first part of this is the same as the solution for exercise 1, just with the new observation:
+#' The first part of this is the same as the solution for exercise A, just with the new observation:
 #' 
 ## -----------------------------------------------------------------------------
 results_lr_2t <- run.jags("logistic_regression.txt", n.chains=2, data=lr_2test)
@@ -526,16 +571,19 @@ results_imp_2t
 #' Note that none of these models allow us to estimate sensitivity or specificity:  there simply is not enough information in the data.  We are therefore forced to fix the values of sensitivity and specificity within the model and assume that these are correct!  The only alternative is to fit a simple fixed effect of the test type in a standard GLM, in which case you can estimate the association between the test type and the observed prevalence.  However, where test type is completely confounded with another predictor variable (as in this case), then we are unable to separate those two effects without incorporating prior knowledge for the diagnostic test performance.
 #' 
 #' 
-#' ## Optional exercises
-#' 
-#' There are two options:
-#' 
-#'   1.  Re-visit the exercises (and optional exercises) from sessions 3-6 that you have not already finished.
-#' 
-#'   1.  Look at your own data and feel free to ask us questions
-#'   
 #' 
 #' `r exercise_end()`
+#' 
+#' 
+#' ## Summary {.fragile}
+#' 
+#' - Adding populations (or equivalently, covariates on prevalence) adds parameters but may add information
+#'   
+#'   * But it is not always worthwile!
+#' 
+#' - Using covariates on sensitivity and specificity is tricky...
+#' 
+#' - Some further reading:  Martinez et al, Stærk-Østergaard et al.
 #' 
 #' 
 ## ----include=FALSE------------------------------------------------------------
