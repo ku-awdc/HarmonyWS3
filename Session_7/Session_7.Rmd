@@ -103,7 +103,7 @@ lrmod <- "model{
 "
 cat(lrmod)
 cat(lrmod, file="logistic_regression.txt")
-cleanup <- c(cleanup, "logistic_regression.txt", "logistic_imperfect.txt", "logistic_2test.txt")
+cleanup <- c(cleanup, "logistic_regression.txt", "logistic_imperfect.txt", "logistic_2test.txt", "logistic_hw.txt")
 ```
 
 - - -
@@ -257,6 +257,36 @@ lrmod <- "model{
 "
 cat(lrmod)
 cat(lrmod, file="logistic_2test.txt")
+```
+
+- - -
+
+
+```{r echo=FALSE, comment=""}
+lrmod <- "model{
+
+  for(i in 1:N){
+    Observation[i] ~ dbern(obs_prob[i])
+    obs_prob[i] <- prob[i]*se[Test[i]] + (1-prob[i])*(1-sp[Test[i]])
+    logit(prob[i]) <- intercept + beta1[Category[i]] + beta2*Covariate[i]
+  }
+
+  #data# se, sp
+
+  intercept ~ dnorm(0, 0.01)
+  beta1[1] <- 0
+  for(c in 2:NC){
+    beta1[c] ~ dnorm(0, 0.01)
+  }
+  beta2 ~ dnorm(0, 0.01)
+
+  #data# N, Observation, NC, Category, Covariate, Test
+  #monitor# intercept, beta1, beta2
+  #inits# intercept, beta1, beta2
+}
+"
+cat(lrmod)
+cat(lrmod, file="logistic_hw.txt")
 ```
 
 ## Group vs Individual LR
