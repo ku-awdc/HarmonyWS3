@@ -51,11 +51,23 @@ source("../rsc/setup.R", local = environment())
 #' 
 #' TODO
 #' 
+#' 
+#' ## Adding a function
+#' 
+#' TODO
+#' 
+#' ## Adding a distribution
+#' 
+#' TODO
+#' 
+#' ## Advanced usage
+#' 
+#' TODO
+#' 
 #' ## Before you go...
 #' 
 #' - Feedback on the course would be extremely welcome!
-#'   - https://www.survey-xact.dk/LinkCollector?key=RKMUENCXS11N
-#'   - I will send a reminder email later today with (the same) survey link
+#'   - Please fill in the stop/start/continue feedback forms provided
 #' 
 #' . . .
 #' 

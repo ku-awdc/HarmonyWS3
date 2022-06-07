@@ -374,7 +374,6 @@ into more complex models</h3>
 
 <div id="recap" class="section level2">
 <h2>Recap</h2>
-<p>NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!</p>
 <p>Models for diagnostic test evaluation require:</p>
 <ul>
 <li>At least 2 tests</li>
@@ -541,10 +540,17 @@ LCM</li>
 <div id="embedding-a-lr-within-a-lcm" class="section level2">
 <h2>Embedding a LR within a LCM</h2>
 <ul>
-<li><p>Blocking at group level is much more efficient than looping
-through all individuals</p></li>
-<li><p>Autocorrelation may be problematic - if so try to use different
-contrast schemes eg:</p></li>
+<li><p>Hierarchical modelling gives us the freedom to include “models
+within models” as needed for our specific application, but we usually
+have to write these ourselves!</p></li>
+<li><p>Remember that blocking at group level is much more efficient than
+looping through all individuals as fewer likelihood calculations are
+required</p></li>
+</ul>
+<div class="incremental">
+<ul>
+<li>Autocorrelation may be problematic - if so try to use different
+contrast schemes eg:</li>
 </ul>
 <pre class="r"><code>  sex_effect ~ dnorm(0, 0.01)
   beta1[1] &lt;- -sex_effect/2
@@ -565,6 +571,7 @@ contrast schemes eg:</p></li>
   #inits# tau
   #monitor# tau, beta3</code></pre>
 </div>
+</div>
 <div id="generating-code-for-a-lr" class="section level2">
 <h2>Generating code for a LR</h2>
 <p>You can use template.jags as inspiration:</p>
@@ -576,10 +583,80 @@ results &lt;- run.jags(&quot;linear_model.txt&quot;)
 ## module glm loaded
 ## module dic loaded</code></pre>
 <hr />
+<pre><code>######################################################################################################
+######################################################################################################
+#### JAGS model file written by runjags version 2.2.2-1 on 2022-06-07 13:27:48 
+######################################################################################################
+######################################################################################################
+
+### Model template as follows - ensure this is syntactically correct before running the model!
+
+model{
+
+# In the BUGS/JAGS language we must use an explicit for loop:
+for(i in 1:N){
+    # These lines describe the response distribution and linear model terms:
+    weight[i] ~ dnorm(regression_fitted[i], regression_precision)
+    regression_residual[i] &lt;- weight[i] - regression_fitted[i]
+    regression_fitted[i] &lt;- intercept + group_effect[group[i]] 
+}
+
+# These lines give the prior distributions for the parameters to be estimated:
+regression_precision ~ dgamma(0.001, 0.001)
+intercept ~ dnorm(0, 10^-6)
+group_effect[1] &lt;- 0    # Factor level &quot;Ctl&quot;
+group_effect[2] ~ dnorm(0, 10^-6)    # Factor level &quot;Trt&quot;
+resid.sum.sq &lt;- sum(regression_residual^2)
+}
+
+# These lines are hooks to be read by runjags (they are ignored by JAGS):
+#monitor# regression_precision, intercept, group_effect, deviance, dic, resid.sum.sq
+#modules# glm on
+#response# weight
+#residual# regression_residual
+#fitted# regression_fitted
+
+######################################################################################################
+######################################################################################################
+#### Initial values 
+######################################################################################################
+######################################################################################################
+
+inits{
+&quot;regression_precision&quot; &lt;- 0.01
+&quot;intercept&quot; &lt;- -1
+&quot;group_effect&quot; &lt;- c(NA, -1)
+}
+
+inits{
+&quot;regression_precision&quot; &lt;- 0.01
+&quot;intercept&quot; &lt;- -1
+&quot;group_effect&quot; &lt;- c(NA, 1)
+}
+
+
+
+######################################################################################################
+######################################################################################################
+#### Data 
+######################################################################################################
+######################################################################################################
+
+data{
+&quot;weight&quot; &lt;- c(4.17, 5.58, 5.18, 6.11, 4.5, 4.61, 5.17, 4.53, 5.33, 5.14, 4.81, 4.17, 4.41, 3.59, 5.87, 3.83, 6.03, 4.89, 4.32, 4.69)
+&quot;group&quot; &lt;- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2)
+&quot;N&quot; &lt;- 20
+
+}
+
+######################################################################################################
+######################################################################################################</code></pre>
+<hr />
 <p>Supported features:</p>
 <ul>
 <li>Gaussian, binomial, Poisson, negative binomial, ZIB, ZIP, ZINB</li>
 <li>Random intercepts</li>
+<li>Automatic centering of continuous variables</li>
 </ul>
 <p>We can also add (currently manually):</p>
 <ul>
@@ -591,7 +668,8 @@ results &lt;- run.jags(&quot;linear_model.txt&quot;)
 <div id="grouping-populations" class="section level2">
 <h2>Grouping populations</h2>
 <ul>
-<li><p>This is the easier option as we can use template_huiwalter!</p>
+<li><p>This is much easier than writing a GLM within our LCM…</p></li>
+<li><p>We can also use the template_huiwalter function!</p>
 <ul>
 <li>See Otero-Abad 2017 for a simple example</li>
 </ul></li>
@@ -618,11 +696,14 @@ effect:</p></li>
 <div class="incremental">
 <p>Inclusion of risk factors for disease is NOT necessary to estimate
 Se/Sp!</p>
+<p>If you are interested in risk factors for disease (rather than the
+se/sp directly) then I would probably use a simpler model with fixed
+se/sp (+/- multiple imputation)</p>
 </div>
 </div>
 </div>
-<div id="incorporating-coefficients-sensitivity-specificity" class="section level1">
-<h1>Incorporating coefficients: sensitivity / specificity</h1>
+<div id="covariates-for-sensitivity-specificity" class="section level1">
+<h1>Covariates for Sensitivity / Specificity</h1>
 <div id="what-if-diagnostic-tests-are-not-consistent-across-populations" class="section level2">
 <h2>What if diagnostic tests are not consistent across populations?</h2>
 <p>This time we can’t just ignore it!</p>
@@ -631,31 +712,107 @@ Se/Sp!</p>
 <li><p>Remove that population (and clearly state this in the
 paper..!)</p></li>
 <li><p>Allow the relevant parameter to vary between populations</p></li>
-<li><p>Use a very simple GLM on the relevant parameter(s)</p></li>
+<li><p>Use a (very simple) GLM on the relevant parameter(s)</p></li>
 </ul>
+<div class="incremental">
+<p>But now we are no longer technically within the Hui-Walter
+framework…</p>
 </div>
-<div id="varying-between-populations" class="section level2">
-<h2>Varying between populations</h2>
-<p>Covid paper</p>
 </div>
-<div id="embedded-glm" class="section level2">
-<h2>Embedded GLM</h2>
-<p>Be careful with centering and contrasts</p>
-<p>Martinez paper</p>
+<div id="varying-sesp-between-populations" class="section level2">
+<h2>Varying Se/Sp between populations</h2>
+<pre class="r"><code>        Tally[1:4,p] ~ dmulti(prob[1:4,p], N[p])
+        
+        prob[1,p] &lt;- prev[p] * ((1-se[1,SeGp[p]])*(1-se[2,SeGp[p]]))  +  (1-prev[p]) * (sp[1])*(sp[2])
+    
+        prob[2,p] &lt;- prev[p] * (se[1,SeGp[p]]*(1-se[2,SeGp[p]]))  +  (1-prev[p]) * (1-sp[1])*sp[2]
+        
+        prob[3,p] &lt;- prev[p] * ((1-se[1,SeGp[p]])*(se[2,SeGp[p]]))  +  (1-prev[p]) * (sp[1])*(1-sp[2])
+    
+        prob[4,p] &lt;- prev[p] * (se[1,SeGp[p]]*se[2,SeGp[p]])  +  (1-prev[p]) * (1-sp[1])*(1-sp[2])
+    
+        prev[p] ~ dbeta(1,1)</code></pre>
+<div class="incremental">
+<p>See also: Stærk-Østergaard 2022</p>
+</div>
+</div>
+<div id="embedded-glm-for-sesp" class="section level2">
+<h2>Embedded GLM for Se/Sp</h2>
+<pre class="r"><code>    for(p in 1:Populations){
+        Tally[1:4,p] ~ dmulti(prob[1:4,p], N[p])
+        
+        # Probability of observing test -/-
+        prob[1,p] &lt;- prev[p] * ((1-se[1,p])*(1-se[2,p]))  +  (1-prev[p]) * (sp[1])*(sp[2])
+    
+        #snip#
+        
+        logit(se[1,p]) &lt;- se_intercept[1] + se1_beta[Se1Category[p]]
+        logit(se[2,p]) &lt;- se_intercept[2] + se2_beta[Se2Category[p]]
+
+    }
+
+  # NB: tweak contrasts for convergence!
+  se_beta1[1] &lt;- -se_eff/2
+  se_beta1[2] &lt;- se_eff/2
+  se_eff ~ dnorm(0, 0.01)</code></pre>
+<div class="incremental">
+<p>See also: Martinez 2008 (although they wrote the samplers
+themselves!)</p>
+</div>
+</div>
+<div id="embedded-glm-for-infection-and-sesp" class="section level2">
+<h2>Embedded GLM for Infection AND Se/Sp</h2>
+<pre class="r"><code>    for(p in 1:Populations){
+        Tally[1:4,p] ~ dmulti(prob[1:4,p], N[p])
+        
+        # Probability of observing test -/-
+        prob[1,p] &lt;- prob[p] * ((1-se[1,p])*(1-se[2,p]))  +  (1-prob[p]) * (sp[1])*(sp[2])
+    
+        #snip#
+        
+        logit(se[1,p]) &lt;- se_intercept[1] + se1_beta[Se1Category[p]]
+        logit(se[2,p]) &lt;- se_intercept[2] + se2_beta[Se2Category[p]]
+
+        logit(prob[i]) &lt;- intercept + beta1[Category[i]]
+
+    }
+
+  # NB: tweak contrasts!!
+  se_beta1[1] &lt;- -se_eff/2
+  se_beta1[2] &lt;- se_eff/2
+  se_eff ~ dnorm(0, 0.01)</code></pre>
+<div class="incremental">
+<p>But what happens if “Category” is confounded with “Se1Category”
+??</p>
+</div>
 </div>
 <div id="general-points" class="section level2">
 <h2>General points</h2>
-<p>If you are interested in covariates on prevalence (rather than the
-se/sp directly) then use a different approach</p>
-<p>Inconsistent Se/Sp may happen in e.g. laboratory vs field settings,
-different sample types, etc</p>
-<p>Theoretically it is possible to incorporate this into the model, but
-if all populations have their own se/sp then the model collapses!</p>
-<p>Be VERY careful when prevalence and se/sp have the same covariate</p>
 <ul>
-<li>Probably best to balance populations by these covariates and then
-only include them as se/sp covariates?</li>
+<li><p>Inconsistent se/sp may happen in e.g. laboratory vs field
+settings, blood vs milk samples, or due to biological effects such as
+age-aquired immunity</p></li>
+<li><p>Theoretically it is possible to incorporate this into the model,
+but…</p>
+<ul>
+<li><p>It is not frequently done so the models are less well
+developed/understood</p></li>
+<li><p>Great care is needed, and any additions should be based on known
+biological processes</p></li>
+<li><p>If all populations have their own se/sp then the model
+collapses!</p></li>
+</ul></li>
 </ul>
+<div class="incremental">
+<ul>
+<li><p>Be VERY careful when prevalence and se/sp have the same
+covariate</p>
+<ul>
+<li>It may work if balancing populations by these covariates, and only
+including them as se/sp covariates?</li>
+</ul></li>
+</ul>
+</div>
 </div>
 </div>
 <div id="practical-session-7" class="section level1">
@@ -664,8 +821,8 @@ only include them as se/sp covariates?</li>
 <h2 class="fragile">Points to consider</h2>
 <ol style="list-style-type: decimal">
 <li><p>What is the optimal number of populations?</p></li>
-<li><p>What happens to identifiability when you deviate “too far” from
-the standard Hui-Walter model?</p></li>
+<li><p>What happens to identifiability when you deviate from the
+standard Hui-Walter model?</p></li>
 </ol>
 </div>
 <div id="exercise-1" class="section level2">
@@ -788,18 +945,18 @@ results_lr
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
 ##                                                                             
 ##            Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
-## intercept  -1.5711 -1.3442 -1.1261 -1.3456 0.11389 -1.3433 0.0011067       1
+## intercept  -1.5771 -1.3455 -1.1297 -1.3469 0.11436 -1.3384 0.0011421       1
 ## beta1[1]         0       0       0       0       0       0        --      --
-## beta1[2]  0.039865 0.32943 0.63311 0.33084 0.15066 0.32453 0.0014483       1
-## beta2      0.13058 0.43894  0.7206 0.43739 0.15141 0.43998 0.0014608       1
-##                                   
-##           SSeff      AC.10    psrf
-## intercept 10590 -0.0054895  1.0001
-## beta1[1]     --         --      --
-## beta1[2]  10822 -0.0009827  1.0005
-## beta2     10743   0.011392 0.99999
+## beta1[2]  0.039329 0.33132 0.62302 0.33191 0.14963 0.33323 0.0014353       1
+## beta2      0.13326 0.43568   0.726 0.43682 0.15254 0.43773 0.0015008       1
+##                                  
+##           SSeff      AC.10   psrf
+## intercept 10027 -0.0005961 1.0002
+## beta1[1]     --         --     --
+## beta1[2]  10868  0.0015231 1.0001
+## beta2     10330   0.010211 1.0001
 ## 
-## Total time taken: 10.3 seconds</code></pre>
+## Total time taken: 10.2 seconds</code></pre>
 <p>The median estimates for beta1 and beta1 are not too far away from
 the simulation parameter values, and at the very least they are
 contained within the 95% CI. However, the intercept parameter is
@@ -862,18 +1019,18 @@ results_imp
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
 ##                                                                          
 ##            Lower95   Median   Upper95     Mean      SD     Mode     MCerr
-## intercept -0.70159 -0.38147 -0.064681 -0.38051 0.16334 -0.37832  0.002473
+## intercept -0.69931 -0.38018 -0.054443 -0.37888  0.1652 -0.37623 0.0026046
 ## beta1[1]         0        0         0        0       0        0        --
-## beta1[2]  0.058118  0.50328   0.95987   0.5055 0.23088  0.48124 0.0035136
-## beta2      0.21454  0.66409    1.1681  0.67054  0.2424  0.66006  0.002261
-##                                        
-##           MC%ofSD SSeff    AC.10   psrf
-## intercept     1.5  4363 0.022307      1
-## beta1[1]       --    --       --     --
-## beta1[2]      1.5  4318 0.027592 1.0004
-## beta2         0.9 11494 0.005376      1
+## beta1[2]  0.041942  0.50483   0.95826  0.50655 0.23301  0.50755 0.0036269
+## beta2      0.19826  0.66587    1.1491  0.66833 0.24266  0.67116 0.0021247
+##                                          
+##           MC%ofSD SSeff      AC.10   psrf
+## intercept     1.6  4023   0.030179 1.0008
+## beta1[1]       --    --         --     --
+## beta1[2]      1.6  4128   0.027219 1.0009
+## beta2         0.9 13043 -0.0056633 1.0006
 ## 
-## Total time taken: 26.7 seconds</code></pre>
+## Total time taken: 26.6 seconds</code></pre>
 <p>This model is slower than the logsitic regression model on the same
 data because the model is more complicated. But has it made any
 difference to the estimates? There are small differences in the
@@ -953,20 +1110,20 @@ just with the new observation:</p>
 results_lr_2t
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
-##                                                                            
-##           Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
-## intercept -1.5866 -1.3664 -1.1394 -1.3674 0.11429 -1.3616 0.0011407       1
-## beta1[1]        0       0       0       0       0       0        --      --
-## beta1[2]   1.2708    1.55  1.8385  1.5495 0.14408  1.5535   0.00136     0.9
-## beta2     0.08756 0.36747 0.64554 0.36657 0.14257 0.36865 0.0013004     0.9
-##                                  
-##           SSeff      AC.10   psrf
-## intercept 10039  0.0016779 1.0001
-## beta1[1]     --         --     --
-## beta1[2]  11224 -0.0013576 1.0001
-## beta2     12019  0.0072383 1.0002
+##                                                                             
+##            Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
+## intercept  -1.5901 -1.3656 -1.1444 -1.3677 0.11436 -1.3536 0.0011375       1
+## beta1[1]         0       0       0       0       0       0        --      --
+## beta1[2]     1.274  1.5493  1.8392  1.5502 0.14469  1.5456 0.0013158     0.9
+## beta2     0.098519 0.36788 0.65501 0.36792 0.14284 0.36616 0.0012843     0.9
+##                                   
+##           SSeff      AC.10    psrf
+## intercept 10107  0.0032702 0.99996
+## beta1[1]     --         --      --
+## beta1[2]  12091 -0.0059799       1
+## beta2     12369 -0.0028219  1.0001
 ## 
-## Total time taken: 10.8 seconds</code></pre>
+## Total time taken: 10.7 seconds</code></pre>
 <p>You can see that we get quite different estimates for beta1 compared
 to before! This is because the diagnostic test is confounded with the
 categorical predictor. This confounding has caused us to over-estimate
@@ -979,19 +1136,19 @@ results_imp_2t
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
 ##                                                                                
-##            Lower95   Median  Upper95    Mean      SD     Mode     MCerr MC%ofSD
-## intercept  -1.0164 -0.64574 -0.27953 -0.6472 0.18806 -0.63311 0.0050372     2.7
-## beta1[1]         0        0        0       0       0        0        --      --
-## beta1[2]    0.3447  0.75361   1.1636 0.75374 0.21102  0.74926 0.0057191     2.7
-## beta2     0.077596  0.42052  0.75628   0.422 0.17338  0.41533 0.0015624     0.9
-##                                
-##           SSeff    AC.10   psrf
-## intercept  1394  0.26499 1.0039
-## beta1[1]     --       --     --
-## beta1[2]   1361  0.26572 1.0039
-## beta2     12314 0.002057 1.0002
+##            Lower95   Median  Upper95     Mean      SD    Mode     MCerr MC%ofSD
+## intercept  -1.0093 -0.63937 -0.26865 -0.63875 0.18762 -0.6476 0.0050179     2.7
+## beta1[1]         0        0        0        0       0       0        --      --
+## beta1[2]   0.34172  0.74518   1.1695  0.74377 0.21029 0.73484  0.005634     2.7
+## beta2     0.092396  0.41745  0.76116  0.41927 0.17191 0.41568 0.0015393     0.9
+##                                  
+##           SSeff      AC.10   psrf
+## intercept  1398    0.24101 1.0022
+## beta1[1]     --         --     --
+## beta1[2]   1393     0.2376 1.0027
+## beta2     12473 -0.0055156 1.0001
 ## 
-## Total time taken: 25.8 seconds</code></pre>
+## Total time taken: 26 seconds</code></pre>
 <p>In this case we control for the confounding between the test type and
 categorical predictor, and end up recovering more sensible estimates for
 beta1 (as well as the intercept and beta2).</p>
@@ -1017,8 +1174,8 @@ adds parameters but may add information</p>
 </ul></li>
 <li><p>Using covariates on sensitivity and specificity is
 tricky…</p></li>
-<li><p>Some further reading: Martinez et al, Stærk-Østergaard et
-al.</p></li>
+<li><p>Some further reading: Martinez et al 2008, Stærk-Østergaard et al
+2022</p></li>
 </ul>
 </div>
 </div>

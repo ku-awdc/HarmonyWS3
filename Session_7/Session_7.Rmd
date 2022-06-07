@@ -31,8 +31,6 @@ source("../rsc/setup.R", local = environment())
 
 ## Recap
 
-NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
-
 Models for diagnostic test evaluation require:
 
   - At least 2 tests
@@ -238,7 +236,11 @@ cat(lrmod, file="logistic_hw.txt")
 
 ## Embedding a LR within a LCM
 
-- Blocking at group level is much more efficient than looping through all individuals
+- Hierarchical modelling gives us the freedom to include "models within models" as needed for our specific application, but we usually have to write these ourselves!
+
+- Remember that blocking at group level is much more efficient than looping through all individuals as fewer likelihood calculations are required
+
+. . .
 
 - Autocorrelation may be problematic - if so try to use different contrast schemes eg:
 
@@ -288,6 +290,12 @@ results <- run.jags("linear_model.txt")
 
 - - -
 
+```{r echo=FALSE, comment=""}
+cat(readLines("linear_model.txt"), sep="\n")
+```
+
+- - -
+
 Supported features:
 
   - Gaussian, binomial, Poisson, negative binomial, ZIB, ZIP, ZINB
@@ -303,7 +311,9 @@ We can also add (currently manually):
 
 ## Grouping populations
 
-- This is the easier option as we can use template_huiwalter!
+- This is much easier than writing a GLM within our LCM...
+
+- We can also use the template_huiwalter function!
   
   * See Otero-Abad 2017 for a simple example
 
@@ -335,7 +345,7 @@ Inclusion of risk factors for disease is NOT necessary to estimate Se/Sp!
 If you are interested in risk factors for disease (rather than the se/sp directly) then I would probably use a simpler model with fixed se/sp (+/- multiple imputation)
 
 
-# Incorporating coefficients:  sensitivity / specificity
+# Covariates for Sensitivity / Specificity
 
 ## What if diagnostic tests are not consistent across populations?
 
@@ -349,32 +359,104 @@ Solutions:
 
 - Use a (very simple) GLM on the relevant parameter(s)
 
+. . .
+
+But now we are no longer technically within the Hui-Walter framework...
+
 ## Varying Se/Sp between populations
 
-TODO 
+```{r, eval=FALSE}
+		Tally[1:4,p] ~ dmulti(prob[1:4,p], N[p])
+		
+		prob[1,p] <- prev[p] * ((1-se[1,SeGp[p]])*(1-se[2,SeGp[p]]))  +  (1-prev[p]) * (sp[1])*(sp[2])
+	
+		prob[2,p] <- prev[p] * (se[1,SeGp[p]]*(1-se[2,SeGp[p]]))  +  (1-prev[p]) * (1-sp[1])*sp[2]
+		
+		prob[3,p] <- prev[p] * ((1-se[1,SeGp[p]])*(se[2,SeGp[p]]))  +  (1-prev[p]) * (sp[1])*(1-sp[2])
+	
+		prob[4,p] <- prev[p] * (se[1,SeGp[p]]*se[2,SeGp[p]])  +  (1-prev[p]) * (1-sp[1])*(1-sp[2])
+	
+		prev[p] ~ dbeta(1,1)
+```
 
-Covid paper
+. . .
 
-## Embedded GLM
+See also:  Stærk-Østergaard 2022
 
-TODO
 
-Be careful with centering and contrasts
+## Embedded GLM for Se/Sp
 
-Martinez paper
+```{r, eval=FALSE}
+	for(p in 1:Populations){
+		Tally[1:4,p] ~ dmulti(prob[1:4,p], N[p])
+		
+		# Probability of observing test -/-
+		prob[1,p] <- prev[p] * ((1-se[1,p])*(1-se[2,p]))  +  (1-prev[p]) * (sp[1])*(sp[2])
+	
+		#snip#
+		
+		logit(se[1,p]) <- se_intercept[1] + se1_beta[Se1Category[p]]
+		logit(se[2,p]) <- se_intercept[2] + se2_beta[Se2Category[p]]
+
+	}
+
+  # NB: tweak contrasts for convergence!
+  se_beta1[1] <- -se_eff/2
+  se_beta1[2] <- se_eff/2
+  se_eff ~ dnorm(0, 0.01)
+```
+
+. . .
+
+See also:  Martinez 2008 (although they wrote the samplers themselves!)
+
+
+## Embedded GLM for Infection AND Se/Sp
+
+```{r, eval=FALSE}
+	for(p in 1:Populations){
+		Tally[1:4,p] ~ dmulti(prob[1:4,p], N[p])
+		
+		# Probability of observing test -/-
+		prob[1,p] <- prob[p] * ((1-se[1,p])*(1-se[2,p]))  +  (1-prob[p]) * (sp[1])*(sp[2])
+	
+		#snip#
+		
+		logit(se[1,p]) <- se_intercept[1] + se1_beta[Se1Category[p]]
+		logit(se[2,p]) <- se_intercept[2] + se2_beta[Se2Category[p]]
+
+		logit(prob[i]) <- intercept + beta1[Category[i]]
+
+	}
+
+  # NB: tweak contrasts!!
+  se_beta1[1] <- -se_eff/2
+  se_beta1[2] <- se_eff/2
+  se_eff ~ dnorm(0, 0.01)
+```
+
+. . .
+
+But what happens if "Category" is confounded with "Se1Category" ??
+
 
 ## General points
 
+- Inconsistent se/sp may happen in e.g. laboratory vs field settings, blood vs milk samples, or due to biological effects such as age-aquired immunity
 
-Inconsistent Se/Sp may happen in e.g. laboratory vs field settings, different sample types, etc
+- Theoretically it is possible to incorporate this into the model, but...
 
-Theoretically it is possible to incorporate this into the model, but if all populations have their own se/sp then the model collapses!
+  * It is not frequently done so the models are less well developed/understood
 
-Be VERY careful when prevalence and se/sp have the same covariate
+  * Great care is needed, and any additions should be based on known biological processes
+  
+  * If all populations have their own se/sp then the model collapses!
 
-- Probably best to balance populations by these covariates and then only include them as se/sp covariates?
+. . .
 
+- Be VERY careful when prevalence and se/sp have the same covariate
 
+  * It may work if balancing populations by these covariates, and only including them as se/sp covariates?
 
 
 # Practical session 7
@@ -383,7 +465,7 @@ Be VERY careful when prevalence and se/sp have the same covariate
 
 1. What is the optimal number of populations?
 
-2. What happens to identifiability when you deviate "too far" from the standard Hui-Walter model?
+2. What happens to identifiability when you deviate from the standard Hui-Walter model?
 
 
 `r exercise_start()`
@@ -611,7 +693,7 @@ Note that none of these models allow us to estimate sensitivity or specificity: 
 
 - Using covariates on sensitivity and specificity is tricky...
 
-- Some further reading:  Martinez et al, Stærk-Østergaard et al.
+- Some further reading:  Martinez et al 2008, Stærk-Østergaard et al 2022
 
 
 ```{r include=FALSE}
