@@ -69,20 +69,10 @@ source("../rsc/setup.R", local = environment())
 #' 
 #'   1. Ignore it
 #'   1. Group "populations" by these characteristics
-#'   1. Embed a (preferably simple) generalised linear model within your LCM
-#' 
-#' 
-#' ## Grouping populations
-#' 
-#' Be careful that Se/Sp still consistent
-#' 
-#' Random effects - code example
-#' 
-#' Otero-Abad paper
+#'   1. Embed a (preferably simple!) generalised linear model within your LCM
 #' 
 #' 
 #' ## Logistic regression in JAGS
-#' 
 #' 
 ## ----echo=FALSE, comment=""---------------------------------------------------
 lrmod <- "model{
@@ -106,38 +96,7 @@ lrmod <- "model{
 "
 cat(lrmod)
 cat(lrmod, file="logistic_regression.txt")
-cleanup <- c(cleanup, "logistic_regression.txt", "logistic_imperfect.txt", "logistic_2test.txt")
-
-#' 
-#' - - -
-#' 
-#' 
-## ----echo=FALSE, comment=""---------------------------------------------------
-lrmod <- "model{
-
-  for(i in 1:N){
-    Observation[i] ~ dbern(obs_prob[i])
-    obs_prob[i] <- prob[i]*se + (1-prob[i])*(1-sp)
-    logit(prob[i]) <- intercept + beta1[Category[i]] + beta2*Covariate[i]
-  }
-
-  se ~ dbeta(1,1)T(1-sp, )
-  sp ~ dbeta(1,1)
-
-  intercept ~ dnorm(0, 0.01)
-  beta1[1] <- 0
-  for(c in 2:NC){
-    beta1[c] ~ dnorm(0, 0.01)
-  }
-  beta2 ~ dnorm(0, 0.01)
-
-  #data# N, Observation, NC, Category, Covariate
-  #monitor# intercept, beta1, beta2, se, sp
-  #inits# intercept, beta1, beta2, se, sp
-}
-"
-cat(lrmod)
-cat(lrmod, file="logistic_imperfect.txt")
+cleanup <- c(cleanup, "logistic_regression.txt", "logistic_imperfect.txt", "logistic_2test.txt", "logistic_hw.txt")
 
 #' 
 #' - - -
@@ -172,38 +131,6 @@ cat(lrmod, file="logistic_imperfect.txt")
 
 #' 
 #' - - -
-#' 
-#' 
-## ----echo=FALSE, comment=""---------------------------------------------------
-lrmod <- "model{
-
-  for(i in 1:N){
-    Observation[i] ~ dbern(obs_prob[i])
-    obs_prob[i] <- prob[i]*se + (1-prob[i])*(1-sp)
-    logit(prob[i]) <- intercept + beta1[Category[i]] + beta2*Covariate[i]
-  }
-
-  se <- 0.9
-  sp <- 0.95
-
-  intercept ~ dnorm(0, 0.01)
-  beta1[1] <- 0
-  for(c in 2:NC){
-    beta1[c] ~ dnorm(0, 0.01)
-  }
-  beta2 ~ dnorm(0, 0.01)
-
-  #data# N, Observation, NC, Category, Covariate
-  #monitor# intercept, beta1, beta2
-  #inits# intercept, beta1, beta2
-}
-"
-cat(lrmod)
-cat(lrmod, file="logistic_imperfect.txt")
-
-#' 
-#' - - -
-#' 
 #' 
 ## ----echo=FALSE, comment=""---------------------------------------------------
 lrmod <- "model{
@@ -262,11 +189,85 @@ cat(lrmod)
 cat(lrmod, file="logistic_2test.txt")
 
 #' 
-#' ## Group vs Individual LR
+#' - - -
 #' 
-#' Blocking at group level more efficient
 #' 
-#' Individual level is possible but not advisable
+## ----echo=FALSE, comment=""---------------------------------------------------
+lrmod <- "model{
+
+  for(i in 1:N){
+    Observations[i,1:4] ~ dmulti(obs_probs[i,1:4], 1)
+    
+    obs_probs[i,1] <- (prob[i] * ((1-se[1])*(1-se[2]))) + ((1-prob[i]) * ((sp[1])*(sp[2])))
+    obs_probs[i,2] <- (prob[i] * ((se[1])*(1-se[2]))) + ((1-prob[i]) * ((1-sp[1])*(sp[2])))
+    obs_probs[i,3] <- (prob[i] * ((1-se[1])*(se[2]))) + ((1-prob[i]) * ((sp[1])*(1-sp[2])))
+    obs_probs[i,4] <- (prob[i] * ((se[1])*(se[2]))) + ((1-prob[i]) * ((1-sp[1])*(1-sp[2])))
+    
+    logit(prob[i]) <- intercept + beta1[Category[i]] + beta2*Covariate[i]
+  }
+
+  #snip#
+
+}
+"
+cat(lrmod)
+cat(lrmod, file="logistic_hw.txt")
+
+#' 
+#' - - -
+#' 
+## ----echo=FALSE, comment=""---------------------------------------------------
+lrmod <- "model{
+
+  for(i in 1:G){
+    Observations[i,1:4] ~ dmulti(obs_probs[i,1:4], Total[i])
+    
+    obs_probs[i,1] <- (prob[i] * ((1-se[1])*(1-se[2]))) + ((1-prob[i]) * ((sp[1])*(sp[2])))
+    obs_probs[i,2] <- (prob[i] * ((se[1])*(1-se[2]))) + ((1-prob[i]) * ((1-sp[1])*(sp[2])))
+    obs_probs[i,3] <- (prob[i] * ((1-se[1])*(se[2]))) + ((1-prob[i]) * ((sp[1])*(1-sp[2])))
+    obs_probs[i,4] <- (prob[i] * ((se[1])*(se[2]))) + ((1-prob[i]) * ((1-sp[1])*(1-sp[2])))
+    
+    logit(prob[i]) <- intercept + beta1[Category[i]] + beta2*RoundedCovariate[i]
+  }
+
+  #snip#
+  
+}
+"
+cat(lrmod)
+cat(lrmod, file="logistic_hw.txt")
+
+#' 
+#' 
+#' ## Embedding a LR within a LCM
+#' 
+#' - Blocking at group level is much more efficient than looping through all individuals
+#' 
+#' - Autocorrelation may be problematic - if so try to use different contrast schemes eg:
+#' 
+## ----eval=FALSE---------------------------------------------------------------
+##   sex_effect ~ dnorm(0, 0.01)
+##   beta1[1] <- -sex_effect/2
+##   beta1[2] <- sex_effect/2
+
+#' 
+#' - - -
+#' 
+#' - Random effects are kind of like fixed effects:
+#' 
+## ----eval=FALSE---------------------------------------------------------------
+##   #snip#
+##     logit(prob[i]) <- intercept + beta1[Category[i]] + beta3[Group[i]]
+##   #snip#
+## 
+##   for(r in 1:NR){
+##     beta3[r] ~ dnorm(0, tau)
+##   }
+##   tau ~ dgamma(0.01, 0.01)
+## 
+##   #inits# tau
+##   #monitor# tau, beta3
+
 #' 
 #' 
 #' ## Generating code for a LR
@@ -290,16 +291,11 @@ results <- run.jags("linear_model.txt")
 #' 
 #' - - -
 #' 
-## -----------------------------------------------------------------------------
-results
-
-#' 
-#' - - -
-#' 
 #' Supported features:
 #' 
 #'   - Gaussian, binomial, Poisson, negative binomial, ZIB, ZIP, ZINB
 #'   - Random intercepts
+#'   - Automatic centering of continuous variables
 #' 
 #' We can also add (currently manually):
 #' 
@@ -307,9 +303,37 @@ results
 #'   - Spline terms
 #'   - Interval censoring
 #' 
-#' ## Example
 #' 
-#' Modify the code to add a single fixed effect across e.g. 3 populations
+#' ## Grouping populations
+#' 
+#' - This is the easier option as we can use template_huiwalter!
+#'   
+#'   * See Otero-Abad 2017 for a simple example
+#' 
+#' - If you have a lot of populations you could use a simple random effect:
+#' 
+## ----eval=FALSE---------------------------------------------------------------
+##   # prev[p] ~ dbeta(1, 1)
+##   logit(prev[p]) <- intercept + raneff[i]
+##   raneff[i] ~ dnorm(0, tau)
+
+#' 
+#' . . .
+#' 
+#' - Be careful that Se/Sp is still consistent across populations!
+#' 
+#' 
+#' ## Do nothing?
+#' 
+#' What is the goal of your analysis?
+#' 
+#'   * Estimating risk factors for disease?
+#'   * Estimating true prevalence?
+#'   * Estimating Se/Sp?
+#' 
+#' . . .
+#' 
+#' Inclusion of risk factors for disease is NOT necessary to estimate Se/Sp!
 #' 
 #' 
 #' # Incorporating coefficients:  sensitivity / specificity
@@ -320,17 +344,21 @@ results
 #' 
 #' Solutions:
 #' 
-#' - Remove that population (and clearly state this in the paper)
+#' - Remove that population (and clearly state this in the paper..!)
 #' 
 #' - Allow the relevant parameter to vary between populations
 #' 
-#' - Use a very simple GLM on the relevant parameter(s)
+#' - Use a (very simple) GLM on the relevant parameter(s)
 #' 
-#' ## Varying between populations
+#' ## Varying Se/Sp between populations
+#' 
+#' TODO 
 #' 
 #' Covid paper
 #' 
 #' ## Embedded GLM
+#' 
+#' TODO
 #' 
 #' Be careful with centering and contrasts
 #' 
@@ -380,7 +408,9 @@ results
 #' 
 #' TODO:  simulate data where se and prevalence both vary by the same covariate
 #' 
-#' Show that this is an impossible dataset to analyse
+#' Add covariate for prevalence and se one at a time then both together
+#' 
+#' Show that this is a difficult dataset to analyse
 #' 
 #' ## Solution 2
 #' 
