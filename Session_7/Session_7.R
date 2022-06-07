@@ -432,10 +432,9 @@ cat(readLines("linear_model.txt"), sep="\n")
 ## 
 ## 	}
 ## 
-##   # NB: tweak contrasts!!
-##   se_beta1[1] <- -se_eff/2
-##   se_beta1[2] <- se_eff/2
+##   #snip#
 ##   se_eff ~ dnorm(0, 0.01)
+##   pr_eff ~ dnorm(0, 0.01)
 
 #' 
 #' . . .
@@ -475,25 +474,121 @@ cat(readLines("linear_model.txt"), sep="\n")
 #' 
 #' ## Exercise 1
 #' 
-#' TODO:  simulate many covariates that affect prevalence, what is the effect of:
+#' We can use simulated data to explore the effect of including different covariates for prevalence.  Let's say that we have the following covariates:  region, herd, breed.
 #' 
-#' - Using only the grouping that is a-priori presumed to be most important
+## -----------------------------------------------------------------------------
+set.seed(2022-06-07)
+
+library("tidyverse")
+
+N <- 1500
+R <- 3
+H <- 30
+B <- 2
+se <- c(0.8, 0.9)
+sp <- c(0.99, 0.98)
+
+tibble(Animal = 1:N, Breed = sample(1:B, N, TRUE), Herd = sample(1:H, N, TRUE)) |>
+  left_join(
+    tibble(Herd = 1:H, Region = sample(1:R, H, TRUE), herd_type = sample(c("B1","B2","mixed"), H, TRUE), herd_effect = rnorm(H, 0, 0.5)),
+    by="Herd"
+  ) |>
+  left_join(
+    tibble(Region = 1:R, region_effect = c(-1, 0, 1)),
+    by = "Region"
+  ) |>
+  mutate(Breed = case_when(
+    herd_type == "B1" ~ 1L,
+    herd_type == "B2" ~ 2L,
+    herd_type == "mixed" ~ Breed
+  )) |>
+  mutate(breed_effect = c(-0.15, 0.15)[Breed]) |>
+  mutate(prob = plogis(-0.5 + region_effect + herd_effect + breed_effect)) |>
+  mutate(status = rbinom(N, 1, prob)) |>
+  mutate(Test1 = rbinom(N, 1, status*se[1] + (1-status)*(1-sp[1]))) |>
+  mutate(Test2 = rbinom(N, 1, status*se[2] + (1-status)*(1-sp[2]))) |>
+  select(Region, Herd, Breed, Test1, Test2) |>
+  arrange(Region, Herd) ->
+  dataset
+
+str(dataset)
+dataset |>
+  count(Region, Test1, Test2)
+
 #' 
-#' - Blocking into as many groups as possible and fitting using random effects
+#' Try to analyse these datasets using the following model variants:
 #' 
-#' - Using the main grouping as fixed and others as random
+#' 1.  Group by region (ignore herd and breed)
+#' 
+#' 1.  Group by region and herd (ignore breed)
+#' 
+#' 1.  Group by region and use a random effect of herd (ignore breed)
+#' 
+#' 1.  (Optional) as above, but include a fixed effect of breed
+#' 
+#' How do the models differ in terms of (a) complexity (i.e. the pain-in-the-arse factor) and (b) inference?
+#' 
 #' 
 #' ## Solution 1
 #' 
 #' TODO
 #' 
+#' 
 #' ## Exercise 2
 #' 
-#' TODO:  simulate data where se and prevalence both vary by the same covariate
+#' We can now simulate the same data as above, but introducing a third test that has a sensitivity that is affected by breed.
 #' 
-#' Add covariate for prevalence and se one at a time then both together
+## -----------------------------------------------------------------------------
+set.seed(2022-06-07)
+
+library("tidyverse")
+
+N <- 1500
+R <- 3
+H <- 30
+B <- 2
+se <- matrix(c(0.8, 0.8, 0.9, 0.9, 0.75, 0.95), ncol=3)
+sp <- c(0.99, 0.98, 0.97)
+
+tibble(Animal = 1:N, Breed = sample(1:B, N, TRUE), Herd = sample(1:H, N, TRUE)) |>
+  left_join(
+    tibble(Herd = 1:H, Region = sample(1:R, H, TRUE), herd_type = sample(c("B1","B2","mixed"), H, TRUE), herd_effect = rnorm(H, 0, 0.5)),
+    by="Herd"
+  ) |>
+  left_join(
+    tibble(Region = 1:R, region_effect = c(-1, 0, 1)),
+    by = "Region"
+  ) |>
+  mutate(Breed = case_when(
+    herd_type == "B1" ~ 1L,
+    herd_type == "B2" ~ 2L,
+    herd_type == "mixed" ~ Breed
+  )) |>
+  mutate(breed_effect = c(-0.15, 0.15)[Breed]) |>
+  mutate(prob = plogis(-0.5 + region_effect + herd_effect + breed_effect)) |>
+  mutate(status = rbinom(N, 1, prob)) |>
+  mutate(Test1 = rbinom(N, 1, status*se[Breed,1] + (1-status)*(1-sp[1]))) |>
+  mutate(Test2 = rbinom(N, 1, status*se[Breed,2] + (1-status)*(1-sp[2]))) |>
+  mutate(Test3 = rbinom(N, 1, status*se[Breed,3] + (1-status)*(1-sp[2]))) |>
+  select(Region, Herd, Breed, Test1, Test2, Test3) |>
+  arrange(Region, Herd) ->
+  dataset
+
+str(dataset)
+dataset |>
+  count(Region, Test1, Test2, Test3)
+
 #' 
-#' Show that this is a difficult dataset to analyse
+#' Try to fit the following standard Hui-Walter models for Test1 and Test3 results (ignore Test2 for now):
+#' 
+#' 1. Group by region
+#' 
+#' 2. Group by region and breed
+#' 
+#' Which estimates change between models (1) and (2), and why?
+#' 
+#' Now add a breed effect to the sensitivity, and re-run these two models.  What are the differences between models, and why?
+#' 
 #' 
 #' ## Solution 2
 #' 

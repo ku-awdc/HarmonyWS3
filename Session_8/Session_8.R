@@ -34,8 +34,6 @@ source("../rsc/setup.R", local = environment())
 #' 
 #' ## Practical session
 #' 
-#' NOTE: THIS MATERIAL IS NOT YET FINALISED, PLEASE CHECK BACK SOON!
-#' 
 #' This is the final session of the course!
 #' 
 #' We have three options to choose from:
@@ -46,23 +44,7 @@ source("../rsc/setup.R", local = environment())
 #' 
 #' 3. Look at how to implement custom distributions/functions via a JAGS module
 #' 
-#' 
-#' ## JAGS modules
-#' 
-#' TODO
-#' 
-#' 
-#' ## Adding a function
-#' 
-#' TODO
-#' 
-#' ## Adding a distribution
-#' 
-#' TODO
-#' 
-#' ## Advanced usage
-#' 
-#' TODO
+#'   * See the JAGS_modules subdirectory
 #' 
 #' ## Before you go...
 #' 

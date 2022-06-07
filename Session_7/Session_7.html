@@ -585,7 +585,7 @@ results &lt;- run.jags(&quot;linear_model.txt&quot;)
 <hr />
 <pre><code>######################################################################################################
 ######################################################################################################
-#### JAGS model file written by runjags version 2.2.2-1 on 2022-06-07 13:27:48 
+#### JAGS model file written by runjags version 2.2.2-1 on 2022-06-07 22:29:38 
 ######################################################################################################
 ######################################################################################################
 
@@ -777,10 +777,9 @@ themselves!)</p>
 
     }
 
-  # NB: tweak contrasts!!
-  se_beta1[1] &lt;- -se_eff/2
-  se_beta1[2] &lt;- se_eff/2
-  se_eff ~ dnorm(0, 0.01)</code></pre>
+  #snip#
+  se_eff ~ dnorm(0, 0.01)
+  pr_eff ~ dnorm(0, 0.01)</code></pre>
 <div class="incremental">
 <p>But what happens if “Category” is confounded with “Se1Category”
 ??</p>
@@ -827,15 +826,77 @@ standard Hui-Walter model?</p></li>
 </div>
 <div id="exercise-1" class="section level2">
 <h2>Exercise 1</h2>
-<p>TODO: simulate many covariates that affect prevalence, what is the
-effect of:</p>
-<ul>
-<li><p>Using only the grouping that is a-priori presumed to be most
-important</p></li>
-<li><p>Blocking into as many groups as possible and fitting using random
-effects</p></li>
-<li><p>Using the main grouping as fixed and others as random</p></li>
-</ul>
+<p>We can use simulated data to explore the effect of including
+different covariates for prevalence. Let’s say that we have the
+following covariates: region, herd, breed.</p>
+<pre class="r"><code>set.seed(2022-06-07)
+
+library(&quot;tidyverse&quot;)
+
+N &lt;- 1500
+R &lt;- 3
+H &lt;- 30
+B &lt;- 2
+se &lt;- c(0.8, 0.9)
+sp &lt;- c(0.99, 0.98)
+
+tibble(Animal = 1:N, Breed = sample(1:B, N, TRUE), Herd = sample(1:H, N, TRUE)) |&gt;
+  left_join(
+    tibble(Herd = 1:H, Region = sample(1:R, H, TRUE), herd_type = sample(c(&quot;B1&quot;,&quot;B2&quot;,&quot;mixed&quot;), H, TRUE), herd_effect = rnorm(H, 0, 0.5)),
+    by=&quot;Herd&quot;
+  ) |&gt;
+  left_join(
+    tibble(Region = 1:R, region_effect = c(-1, 0, 1)),
+    by = &quot;Region&quot;
+  ) |&gt;
+  mutate(Breed = case_when(
+    herd_type == &quot;B1&quot; ~ 1L,
+    herd_type == &quot;B2&quot; ~ 2L,
+    herd_type == &quot;mixed&quot; ~ Breed
+  )) |&gt;
+  mutate(breed_effect = c(-0.15, 0.15)[Breed]) |&gt;
+  mutate(prob = plogis(-0.5 + region_effect + herd_effect + breed_effect)) |&gt;
+  mutate(status = rbinom(N, 1, prob)) |&gt;
+  mutate(Test1 = rbinom(N, 1, status*se[1] + (1-status)*(1-sp[1]))) |&gt;
+  mutate(Test2 = rbinom(N, 1, status*se[2] + (1-status)*(1-sp[2]))) |&gt;
+  select(Region, Herd, Breed, Test1, Test2) |&gt;
+  arrange(Region, Herd) -&gt;
+  dataset
+
+str(dataset)
+## tibble [1,500 × 5] (S3: tbl_df/tbl/data.frame)
+##  $ Region: int [1:1500] 1 1 1 1 1 1 1 1 1 1 ...
+##  $ Herd  : int [1:1500] 12 12 12 12 12 12 12 12 12 12 ...
+##  $ Breed : int [1:1500] 2 2 2 2 2 2 2 2 2 2 ...
+##  $ Test1 : int [1:1500] 0 1 0 1 0 1 0 0 1 0 ...
+##  $ Test2 : int [1:1500] 0 1 0 1 0 1 0 0 1 0 ...
+dataset |&gt;
+  count(Region, Test1, Test2)
+## # A tibble: 12 × 4
+##    Region Test1 Test2     n
+##     &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;
+##  1      1     0     0   165
+##  2      1     0     1    14
+##  3      1     1     0     1
+##  4      1     1     1    40
+##  5      2     0     0   216
+##  6      2     0     1    33
+##  7      2     1     0    15
+##  8      2     1     1   120
+##  9      3     0     0   326
+## 10      3     0     1   100
+## 11      3     1     0    53
+## 12      3     1     1   417</code></pre>
+<p>Try to analyse these datasets using the following model variants:</p>
+<ol style="list-style-type: decimal">
+<li><p>Group by region (ignore herd and breed)</p></li>
+<li><p>Group by region and herd (ignore breed)</p></li>
+<li><p>Group by region and use a random effect of herd (ignore
+breed)</p></li>
+<li><p>(Optional) as above, but include a fixed effect of breed</p></li>
+</ol>
+<p>How do the models differ in terms of (a) complexity (i.e. the
+pain-in-the-arse factor) and (b) inference?</p>
 </div>
 <div id="solution-1" class="section level2">
 <h2>Solution 1</h2>
@@ -843,11 +904,76 @@ effects</p></li>
 </div>
 <div id="exercise-2" class="section level2">
 <h2>Exercise 2</h2>
-<p>TODO: simulate data where se and prevalence both vary by the same
-covariate</p>
-<p>Add covariate for prevalence and se one at a time then both
-together</p>
-<p>Show that this is a difficult dataset to analyse</p>
+<p>We can now simulate the same data as above, but introducing a third
+test that has a sensitivity that is affected by breed.</p>
+<pre class="r"><code>set.seed(2022-06-07)
+
+library(&quot;tidyverse&quot;)
+
+N &lt;- 1500
+R &lt;- 3
+H &lt;- 30
+B &lt;- 2
+se &lt;- matrix(c(0.8, 0.8, 0.9, 0.9, 0.75, 0.95), ncol=3)
+sp &lt;- c(0.99, 0.98, 0.97)
+
+tibble(Animal = 1:N, Breed = sample(1:B, N, TRUE), Herd = sample(1:H, N, TRUE)) |&gt;
+  left_join(
+    tibble(Herd = 1:H, Region = sample(1:R, H, TRUE), herd_type = sample(c(&quot;B1&quot;,&quot;B2&quot;,&quot;mixed&quot;), H, TRUE), herd_effect = rnorm(H, 0, 0.5)),
+    by=&quot;Herd&quot;
+  ) |&gt;
+  left_join(
+    tibble(Region = 1:R, region_effect = c(-1, 0, 1)),
+    by = &quot;Region&quot;
+  ) |&gt;
+  mutate(Breed = case_when(
+    herd_type == &quot;B1&quot; ~ 1L,
+    herd_type == &quot;B2&quot; ~ 2L,
+    herd_type == &quot;mixed&quot; ~ Breed
+  )) |&gt;
+  mutate(breed_effect = c(-0.15, 0.15)[Breed]) |&gt;
+  mutate(prob = plogis(-0.5 + region_effect + herd_effect + breed_effect)) |&gt;
+  mutate(status = rbinom(N, 1, prob)) |&gt;
+  mutate(Test1 = rbinom(N, 1, status*se[Breed,1] + (1-status)*(1-sp[1]))) |&gt;
+  mutate(Test2 = rbinom(N, 1, status*se[Breed,2] + (1-status)*(1-sp[2]))) |&gt;
+  mutate(Test3 = rbinom(N, 1, status*se[Breed,3] + (1-status)*(1-sp[2]))) |&gt;
+  select(Region, Herd, Breed, Test1, Test2, Test3) |&gt;
+  arrange(Region, Herd) -&gt;
+  dataset
+
+str(dataset)
+## tibble [1,500 × 6] (S3: tbl_df/tbl/data.frame)
+##  $ Region: int [1:1500] 1 1 1 1 1 1 1 1 1 1 ...
+##  $ Herd  : int [1:1500] 12 12 12 12 12 12 12 12 12 12 ...
+##  $ Breed : int [1:1500] 2 2 2 2 2 2 2 2 2 2 ...
+##  $ Test1 : int [1:1500] 0 1 0 1 0 1 0 0 1 0 ...
+##  $ Test2 : int [1:1500] 0 1 0 1 0 1 0 0 1 0 ...
+##  $ Test3 : int [1:1500] 0 1 0 1 0 1 0 0 1 0 ...
+dataset |&gt;
+  count(Region, Test1, Test2, Test3)
+## # A tibble: 22 × 5
+##    Region Test1 Test2 Test3     n
+##     &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;
+##  1      1     0     0     0   165
+##  2      1     0     1     0     5
+##  3      1     0     1     1     9
+##  4      1     1     0     0     1
+##  5      1     1     1     0     5
+##  6      1     1     1     1    35
+##  7      2     0     0     0   206
+##  8      2     0     0     1    10
+##  9      2     0     1     0     6
+## 10      2     0     1     1    27
+## # … with 12 more rows</code></pre>
+<p>Try to fit the following standard Hui-Walter models for Test1 and
+Test3 results (ignore Test2 for now):</p>
+<ol style="list-style-type: decimal">
+<li><p>Group by region</p></li>
+<li><p>Group by region and breed</p></li>
+</ol>
+<p>Which estimates change between models (1) and (2), and why?</p>
+<p>Now add a breed effect to the sensitivity, and re-run these two
+models. What are the differences between models, and why?</p>
 </div>
 <div id="solution-2" class="section level2">
 <h2>Solution 2</h2>
@@ -945,18 +1071,18 @@ results_lr
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
 ##                                                                             
 ##            Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
-## intercept  -1.5771 -1.3455 -1.1297 -1.3469 0.11436 -1.3384 0.0011421       1
+## intercept  -1.5682 -1.3468 -1.1232 -1.3478 0.11452 -1.3387 0.0011621       1
 ## beta1[1]         0       0       0       0       0       0        --      --
-## beta1[2]  0.039329 0.33132 0.62302 0.33191 0.14963 0.33323 0.0014353       1
-## beta2      0.13326 0.43568   0.726 0.43682 0.15254 0.43773 0.0015008       1
-##                                  
-##           SSeff      AC.10   psrf
-## intercept 10027 -0.0005961 1.0002
-## beta1[1]     --         --     --
-## beta1[2]  10868  0.0015231 1.0001
-## beta2     10330   0.010211 1.0001
+## beta1[2]  0.036167 0.32952 0.62026 0.33065 0.14971 0.32908 0.0014489       1
+## beta2       0.1376  0.4372 0.74083 0.43808 0.15387 0.42687 0.0014693       1
+##                                   
+##           SSeff      AC.10    psrf
+## intercept  9710 -0.0075649 0.99997
+## beta1[1]     --         --      --
+## beta1[2]  10676 -0.0096227 0.99996
+## beta2     10967 -0.0047286       1
 ## 
-## Total time taken: 10.2 seconds</code></pre>
+## Total time taken: 10.3 seconds</code></pre>
 <p>The median estimates for beta1 and beta1 are not too far away from
 the simulation parameter values, and at the very least they are
 contained within the 95% CI. However, the intercept parameter is
@@ -1017,20 +1143,20 @@ different model:</p>
 results_imp
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
-##                                                                          
-##            Lower95   Median   Upper95     Mean      SD     Mode     MCerr
-## intercept -0.69931 -0.38018 -0.054443 -0.37888  0.1652 -0.37623 0.0026046
-## beta1[1]         0        0         0        0       0        0        --
-## beta1[2]  0.041942  0.50483   0.95826  0.50655 0.23301  0.50755 0.0036269
-## beta2      0.19826  0.66587    1.1491  0.66833 0.24266  0.67116 0.0021247
-##                                          
-##           MC%ofSD SSeff      AC.10   psrf
-## intercept     1.6  4023   0.030179 1.0008
-## beta1[1]       --    --         --     --
-## beta1[2]      1.6  4128   0.027219 1.0009
-## beta2         0.9 13043 -0.0056633 1.0006
+##                                                                         
+##            Lower95  Median   Upper95     Mean      SD     Mode     MCerr
+## intercept -0.68854 -0.3794 -0.052239 -0.37872 0.16239 -0.38345 0.0024351
+## beta1[1]         0       0         0        0       0        0        --
+## beta1[2]  0.052288 0.50523   0.95559  0.50669 0.23058  0.50835 0.0034914
+## beta2      0.20662 0.66932    1.1555  0.67065 0.24192  0.67192  0.002173
+##                                           
+##           MC%ofSD SSeff      AC.10    psrf
+## intercept     1.5  4447   0.005157       1
+## beta1[1]       --    --         --      --
+## beta1[2]      1.5  4362  0.0065196 0.99997
+## beta2         0.9 12394 -0.0086716  1.0003
 ## 
-## Total time taken: 26.6 seconds</code></pre>
+## Total time taken: 26.8 seconds</code></pre>
 <p>This model is slower than the logsitic regression model on the same
 data because the model is more complicated. But has it made any
 difference to the estimates? There are small differences in the
@@ -1110,18 +1236,18 @@ just with the new observation:</p>
 results_lr_2t
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
-##                                                                             
-##            Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
-## intercept  -1.5901 -1.3656 -1.1444 -1.3677 0.11436 -1.3536 0.0011375       1
-## beta1[1]         0       0       0       0       0       0        --      --
-## beta1[2]     1.274  1.5493  1.8392  1.5502 0.14469  1.5456 0.0013158     0.9
-## beta2     0.098519 0.36788 0.65501 0.36792 0.14284 0.36616 0.0012843     0.9
+##                                                                            
+##           Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
+## intercept -1.5853 -1.3662 -1.1403 -1.3666  0.1139 -1.3615 0.0011343       1
+## beta1[1]        0       0       0       0       0       0        --      --
+## beta1[2]   1.2789  1.5471  1.8383  1.5479 0.14331  1.5401 0.0013701       1
+## beta2     0.07696 0.36615 0.63643 0.36626 0.14244 0.36338  0.001297     0.9
 ##                                   
-##           SSeff      AC.10    psrf
-## intercept 10107  0.0032702 0.99996
-## beta1[1]     --         --      --
-## beta1[2]  12091 -0.0059799       1
-## beta2     12369 -0.0028219  1.0001
+##           SSeff       AC.10   psrf
+## intercept 10082  -0.0038243 1.0005
+## beta1[1]     --          --     --
+## beta1[2]  10941 -0.00094898 1.0003
+## beta2     12062   0.0042649 1.0001
 ## 
 ## Total time taken: 10.7 seconds</code></pre>
 <p>You can see that we get quite different estimates for beta1 compared
@@ -1135,20 +1261,20 @@ the effect of the categorical predictor.</p>
 results_imp_2t
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
-##                                                                                
-##            Lower95   Median  Upper95     Mean      SD    Mode     MCerr MC%ofSD
-## intercept  -1.0093 -0.63937 -0.26865 -0.63875 0.18762 -0.6476 0.0050179     2.7
-## beta1[1]         0        0        0        0       0       0        --      --
-## beta1[2]   0.34172  0.74518   1.1695  0.74377 0.21029 0.73484  0.005634     2.7
-## beta2     0.092396  0.41745  0.76116  0.41927 0.17191 0.41568 0.0015393     0.9
-##                                  
-##           SSeff      AC.10   psrf
-## intercept  1398    0.24101 1.0022
-## beta1[1]     --         --     --
-## beta1[2]   1393     0.2376 1.0027
-## beta2     12473 -0.0055156 1.0001
+##                                                                         
+##            Lower95   Median  Upper95     Mean      SD     Mode     MCerr
+## intercept  -1.0146 -0.64982 -0.29171 -0.64956 0.18431 -0.65124 0.0044747
+## beta1[1]         0        0        0        0       0        0        --
+## beta1[2]   0.35415  0.75662   1.1625  0.75732 0.20637  0.75983 0.0050026
+## beta2     0.071913  0.41768  0.74511  0.41947  0.1736  0.41451  0.001561
+##                                       
+##           MC%ofSD SSeff   AC.10   psrf
+## intercept     2.4  1696 0.19678 1.0009
+## beta1[1]       --    --      --     --
+## beta1[2]      2.4  1702 0.20372 1.0007
+## beta2         0.9 12368 0.00273 1.0001
 ## 
-## Total time taken: 26 seconds</code></pre>
+## Total time taken: 25.7 seconds</code></pre>
 <p>In this case we control for the confounding between the test type and
 categorical predictor, and end up recovering more sensible estimates for
 beta1 (as well as the intercept and beta2).</p>
