@@ -364,8 +364,7 @@ pre code {
 
 
 <h1 class="title toc-ignore">Session 7</h1>
-<h3 class="subtitle">Incorporating imperfect sensitivity and specificity
-into more complex models</h3>
+<h3 class="subtitle">Incorporating covariates into LCM</h3>
 <h4 class="author">Matt Denwood</h4>
 <h4 class="date">2022-06-10</h4>
 
@@ -388,8 +387,8 @@ into more complex models</h3>
 </ul>
 </div>
 </div>
-<div id="incorporating-coefficients-prevalence" class="section level1">
-<h1>Incorporating coefficients: prevalence</h1>
+<div id="incorporating-covariates-for-prevalence" class="section level1">
+<h1>Incorporating covariates for prevalence</h1>
 <div id="modelling-variation-in-infection-probability" class="section level2">
 <h2>Modelling variation in infection probability</h2>
 <ul>
@@ -585,7 +584,7 @@ results &lt;- run.jags(&quot;linear_model.txt&quot;)
 <hr />
 <pre><code>######################################################################################################
 ######################################################################################################
-#### JAGS model file written by runjags version 2.2.2-1 on 2022-06-07 22:29:38 
+#### JAGS model file written by runjags version 2.2.2-1 on 2022-06-09 22:18:12 
 ######################################################################################################
 ######################################################################################################
 
@@ -900,7 +899,7 @@ pain-in-the-arse factor) and (b) inference?</p>
 </div>
 <div id="solution-1" class="section level2">
 <h2>Solution 1</h2>
-<p>TODO</p>
+<p>[Will be added by 20th June 2022]</p>
 </div>
 <div id="exercise-2" class="section level2">
 <h2>Exercise 2</h2>
@@ -914,7 +913,7 @@ N &lt;- 1500
 R &lt;- 3
 H &lt;- 30
 B &lt;- 2
-se &lt;- matrix(c(0.8, 0.8, 0.9, 0.9, 0.75, 0.95), ncol=3)
+se &lt;- matrix(c(0.8, 0.8, 0.9, 0.9, 0.95, 0.75), ncol=3)
 sp &lt;- c(0.99, 0.98, 0.97)
 
 tibble(Animal = 1:N, Breed = sample(1:B, N, TRUE), Herd = sample(1:H, N, TRUE)) |&gt;
@@ -948,25 +947,25 @@ str(dataset)
 ##  $ Breed : int [1:1500] 2 2 2 2 2 2 2 2 2 2 ...
 ##  $ Test1 : int [1:1500] 0 1 0 1 0 1 0 0 1 0 ...
 ##  $ Test2 : int [1:1500] 0 1 0 1 0 1 0 0 1 0 ...
-##  $ Test3 : int [1:1500] 0 1 0 1 0 1 0 0 1 0 ...
+##  $ Test3 : int [1:1500] 0 1 0 1 0 0 0 0 0 0 ...
 dataset |&gt;
   count(Region, Test1, Test2, Test3)
 ## # A tibble: 22 × 5
 ##    Region Test1 Test2 Test3     n
 ##     &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;
 ##  1      1     0     0     0   165
-##  2      1     0     1     0     5
-##  3      1     0     1     1     9
+##  2      1     0     1     0     8
+##  3      1     0     1     1     6
 ##  4      1     1     0     0     1
-##  5      1     1     1     0     5
-##  6      1     1     1     1    35
-##  7      2     0     0     0   206
-##  8      2     0     0     1    10
-##  9      2     0     1     0     6
-## 10      2     0     1     1    27
+##  5      1     1     1     0     8
+##  6      1     1     1     1    32
+##  7      2     0     0     0   205
+##  8      2     0     0     1    11
+##  9      2     0     1     0    10
+## 10      2     0     1     1    23
 ## # … with 12 more rows</code></pre>
 <p>Try to fit the following standard Hui-Walter models for Test1 and
-Test3 results (ignore Test2 for now):</p>
+Test3 results (ignore Test2):</p>
 <ol style="list-style-type: decimal">
 <li><p>Group by region</p></li>
 <li><p>Group by region and breed</p></li>
@@ -977,7 +976,7 @@ models. What are the differences between models, and why?</p>
 </div>
 <div id="solution-2" class="section level2">
 <h2>Solution 2</h2>
-<p>TODO</p>
+<p>[Will be added by 20th June 2022]</p>
 </div>
 <div id="optional-exercise-a" class="section level2">
 <h2>Optional Exercise A</h2>
@@ -1069,18 +1068,18 @@ beta2 &lt;- list(chain1=4, chain2=-4)</code></pre>
 results_lr
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
-##                                                                             
-##            Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
-## intercept  -1.5682 -1.3468 -1.1232 -1.3478 0.11452 -1.3387 0.0011621       1
-## beta1[1]         0       0       0       0       0       0        --      --
-## beta1[2]  0.036167 0.32952 0.62026 0.33065 0.14971 0.32908 0.0014489       1
-## beta2       0.1376  0.4372 0.74083 0.43808 0.15387 0.42687 0.0014693       1
+##                                                                            
+##           Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
+## intercept  -1.567 -1.3446 -1.1218 -1.3456 0.11326 -1.3422 0.0011354       1
+## beta1[1]        0       0       0       0       0       0        --      --
+## beta1[2]   0.0344 0.33065  0.6184 0.32962 0.14973 0.32585 0.0014527       1
+## beta2     0.13262 0.43498 0.72802 0.43538 0.15143 0.43453 0.0014397       1
 ##                                   
 ##           SSeff      AC.10    psrf
-## intercept  9710 -0.0075649 0.99997
+## intercept  9950 -0.0022456       1
 ## beta1[1]     --         --      --
-## beta1[2]  10676 -0.0096227 0.99996
-## beta2     10967 -0.0047286       1
+## beta1[2]  10623 -0.0030156 0.99997
+## beta2     11063  0.0055969  1.0003
 ## 
 ## Total time taken: 10.3 seconds</code></pre>
 <p>The median estimates for beta1 and beta1 are not too far away from
@@ -1143,20 +1142,20 @@ different model:</p>
 results_imp
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
-##                                                                         
-##            Lower95  Median   Upper95     Mean      SD     Mode     MCerr
-## intercept -0.68854 -0.3794 -0.052239 -0.37872 0.16239 -0.38345 0.0024351
-## beta1[1]         0       0         0        0       0        0        --
-## beta1[2]  0.052288 0.50523   0.95559  0.50669 0.23058  0.50835 0.0034914
-## beta2      0.20662 0.66932    1.1555  0.67065 0.24192  0.67192  0.002173
-##                                           
-##           MC%ofSD SSeff      AC.10    psrf
-## intercept     1.5  4447   0.005157       1
-## beta1[1]       --    --         --      --
-## beta1[2]      1.5  4362  0.0065196 0.99997
-## beta2         0.9 12394 -0.0086716  1.0003
+##                                                                          
+##            Lower95   Median   Upper95     Mean      SD     Mode     MCerr
+## intercept -0.68349 -0.38509 -0.055203 -0.38309  0.1611 -0.39245 0.0024402
+## beta1[1]         0        0         0        0       0        0        --
+## beta1[2]  0.054289  0.51239   0.95257  0.51125 0.22933  0.51449 0.0034954
+## beta2      0.20358  0.66494    1.1308  0.66898 0.23834  0.66548 0.0021434
+##                                         
+##           MC%ofSD SSeff     AC.10   psrf
+## intercept     1.5  4358  0.013998 1.0009
+## beta1[1]       --    --        --     --
+## beta1[2]      1.5  4305  0.017773 1.0008
+## beta2         0.9 12364 -0.019605 1.0005
 ## 
-## Total time taken: 26.8 seconds</code></pre>
+## Total time taken: 26.6 seconds</code></pre>
 <p>This model is slower than the logsitic regression model on the same
 data because the model is more complicated. But has it made any
 difference to the estimates? There are small differences in the
@@ -1237,19 +1236,19 @@ results_lr_2t
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
 ##                                                                            
-##           Lower95  Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
-## intercept -1.5853 -1.3662 -1.1403 -1.3666  0.1139 -1.3615 0.0011343       1
-## beta1[1]        0       0       0       0       0       0        --      --
-## beta1[2]   1.2789  1.5471  1.8383  1.5479 0.14331  1.5401 0.0013701       1
-## beta2     0.07696 0.36615 0.63643 0.36626 0.14244 0.36338  0.001297     0.9
-##                                   
-##           SSeff       AC.10   psrf
-## intercept 10082  -0.0038243 1.0005
-## beta1[1]     --          --     --
-## beta1[2]  10941 -0.00094898 1.0003
-## beta2     12062   0.0042649 1.0001
+##            Lower95 Median Upper95    Mean      SD    Mode     MCerr MC%ofSD
+## intercept  -1.5934 -1.364 -1.1411 -1.3662 0.11555 -1.3664 0.0011378       1
+## beta1[1]         0      0       0       0       0       0        --      --
+## beta1[2]    1.2636 1.5484  1.8328  1.5481 0.14595  1.5533 0.0013639     0.9
+## beta2     0.091821 0.3637 0.64818 0.36367 0.14248 0.36396 0.0012746     0.9
+##                                  
+##           SSeff     AC.10    psrf
+## intercept 10314 0.0042635       1
+## beta1[1]     --        --      --
+## beta1[2]  11451  0.001141 0.99998
+## beta2     12495 -0.014358 0.99997
 ## 
-## Total time taken: 10.7 seconds</code></pre>
+## Total time taken: 10.8 seconds</code></pre>
 <p>You can see that we get quite different estimates for beta1 compared
 to before! This is because the diagnostic test is confounded with the
 categorical predictor. This confounding has caused us to over-estimate
@@ -1261,18 +1260,18 @@ the effect of the categorical predictor.</p>
 results_imp_2t
 ## 
 ## JAGS model summary statistics from 20000 samples (chains = 2; adapt+burnin = 5000):
-##                                                                         
-##            Lower95   Median  Upper95     Mean      SD     Mode     MCerr
-## intercept  -1.0146 -0.64982 -0.29171 -0.64956 0.18431 -0.65124 0.0044747
-## beta1[1]         0        0        0        0       0        0        --
-## beta1[2]   0.35415  0.75662   1.1625  0.75732 0.20637  0.75983 0.0050026
-## beta2     0.071913  0.41768  0.74511  0.41947  0.1736  0.41451  0.001561
-##                                       
-##           MC%ofSD SSeff   AC.10   psrf
-## intercept     2.4  1696 0.19678 1.0009
-## beta1[1]       --    --      --     --
-## beta1[2]      2.4  1702 0.20372 1.0007
-## beta2         0.9 12368 0.00273 1.0001
+##                                                                                
+##            Lower95   Median  Upper95     Mean      SD    Mode     MCerr MC%ofSD
+## intercept  -1.0175 -0.64913 -0.29902 -0.65024 0.18411 -0.6398 0.0047006     2.6
+## beta1[1]         0        0        0        0       0       0        --      --
+## beta1[2]   0.35195  0.75703   1.1566  0.75724 0.20591 0.75202 0.0053008     2.6
+## beta2     0.071409   0.4197  0.75926   0.4196  0.1745 0.41694 0.0015482     0.9
+##                                  
+##           SSeff     AC.10    psrf
+## intercept  1534   0.21171   1.004
+## beta1[1]     --        --      --
+## beta1[2]   1509   0.21756  1.0039
+## beta2     12704 0.0049323 0.99996
 ## 
 ## Total time taken: 25.7 seconds</code></pre>
 <p>In this case we control for the confounding between the test type and

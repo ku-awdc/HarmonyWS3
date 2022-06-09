@@ -3,7 +3,7 @@ list(presentation = TRUE)
 
 #' ---
 #' title: Session 7
-#' subtitle: Incorporating imperfect sensitivity and specificity into more complex models
+#' subtitle: Incorporating covariates into LCM
 #' date: "2022-06-10"
 #' author:
 #'   - Matt Denwood
@@ -49,7 +49,7 @@ source("../rsc/setup.R", local = environment())
 #'   - What exactly is the latent class?
 #' 
 #' 
-#' # Incorporating coefficients:  prevalence
+#' # Incorporating covariates for prevalence
 #' 
 #' ## Modelling variation in infection probability
 #' 
@@ -531,7 +531,7 @@ dataset |>
 #' 
 #' ## Solution 1
 #' 
-#' TODO
+#' [Will be added by 20th June 2022]
 #' 
 #' 
 #' ## Exercise 2
@@ -547,7 +547,7 @@ N <- 1500
 R <- 3
 H <- 30
 B <- 2
-se <- matrix(c(0.8, 0.8, 0.9, 0.9, 0.75, 0.95), ncol=3)
+se <- matrix(c(0.8, 0.8, 0.9, 0.9, 0.95, 0.75), ncol=3)
 sp <- c(0.99, 0.98, 0.97)
 
 tibble(Animal = 1:N, Breed = sample(1:B, N, TRUE), Herd = sample(1:H, N, TRUE)) |>
@@ -579,7 +579,7 @@ dataset |>
   count(Region, Test1, Test2, Test3)
 
 #' 
-#' Try to fit the following standard Hui-Walter models for Test1 and Test3 results (ignore Test2 for now):
+#' Try to fit the following standard Hui-Walter models for Test1 and Test3 results (ignore Test2):
 #' 
 #' 1. Group by region
 #' 
@@ -592,7 +592,7 @@ dataset |>
 #' 
 #' ## Solution 2
 #' 
-#' TODO
+#' [Will be added by 20th June 2022]
 #' 
 #' 
 #' ## Optional Exercise A
