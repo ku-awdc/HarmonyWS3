@@ -1,0 +1,26 @@
+Package: basicmodule
+Title: Basic JAGS Module Template
+Version: 0.1.0-1
+Date: 2022-06-09
+Authors@R: c(person("Matthew", "Denwood", role=c("aut","cre"), email="md@sund.ku.dk"),
+             person("Martyn", "Plummer", role="cph", 
+             comment="Copyright holder of the code in configure.ac, and original copyright holder of some modified code where indicated"))
+Description: A template demonstrating a simple JAGS module
+License: GPL-2
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+SystemRequirements: JAGS >= 4.3.0 (https://mcmc-jags.sourceforge.io/)
+Depends:
+    R (>= 2.14.0)
+Imports:
+    coda (>= 0.17-1),
+    rjags (>= 4-7)
+Suggests: 
+    runjags,
+    testthat (>= 3.0.0),
+    knitr,
+    markdown
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+Language: en-GB

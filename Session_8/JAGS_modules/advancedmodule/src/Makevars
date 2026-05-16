@@ -1,0 +1,38 @@
+######################################################################################################
+###
+###  This file is based on that in the rjags package (version 4-10)
+###  Original file is Copyright (C) Martyn Plummer, licensed under GPL-2
+###
+###  This file allows compilation between JAGS 3 and 4 (or later) without modifying runjags.
+###  To force the package to compile assuming a given JAGS version is installed, use the 
+###  JAGS_MAJOR_FORCED environmental variable.  This should not be necessary on unix.
+###  
+###  Once JAGS version 3 is obsolete, the module will be simplified to be dependent on JAGS >= 4
+###  
+###  Matthew Denwood, 24th February 2021
+###
+######################################################################################################
+
+
+###############
+###  Flags
+###  Prepending 0 to JAGS_MAJOR_VERSION prevents it being set as blank (the C++ code requires a number)
+###  JAGS_MAJOR_ASSUMED is not needed (always 0) on unix
+###############
+
+PKG_CPPFLAGS=-I/usr/local/include/JAGS -D JAGS_MAJOR_FORCED=0$(JAGS_MAJOR_VERSION) -D JAGS_MAJOR_ASSUMED=0
+PKG_LIBS=-L/usr/local/lib -ljags 
+
+###############
+
+
+###############
+###  LIBS and objects to be compiled
+###############
+
+OBJECTS = distributions/DLom.o functions/Adder.o basicmodule.o
+
+###############
+
+
+
